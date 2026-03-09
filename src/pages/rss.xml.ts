@@ -10,7 +10,7 @@ export async function GET(context: APIContext) {
   );
 
   return rss({
-    title: "Your Name — Writing",
+    title: "tado — Writing",
     description:
       "Computational structural engineering, finite element methods, and the tools I build.",
     site: context.site!,
