@@ -16,51 +16,80 @@ interface Props {
   recommendedPosts?: CollectionEntry<"writing">[];
 }
 
-const { post, headings = [], prevPost, nextPost, recommendedPosts = [] } = Astro.props;
+const {
+  post,
+  headings = [],
+  prevPost,
+  nextPost,
+  recommendedPosts = [],
+} = Astro.props;
+
 const { title, description, publishDate, lane, tags, readingTime } = post.data;
 
 const formattedDate = new Date(publishDate).toLocaleDateString("en-US", {
-  year: "numeric",
+  year:  "numeric",
   month: "long",
-  day: "numeric",
+  day:   "numeric",
 });
 
 const laneVariant = {
   structural: "warning",
-  dev: "info",
-  tool: "success",
-  workflow: "secondary",
+  dev:        "info",
+  tool:       "success",
+  workflow:   "secondary",
 } as const;
 
-const formatLane = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+const formatLane = (value: string) =>
+  value.charAt(0).toUpperCase() + value.slice(1);
+
 const formatNavMeta = (entry: CollectionEntry<"writing">) =>
   `${formatLane(entry.data.lane)} · ${new Date(entry.data.publishDate).toLocaleDateString("en-US", {
     month: "short",
-    year: "numeric",
+    year:  "numeric",
   })}`;
 
+// Show the TOC column when there are at least 2 qualifying headings
 const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1;
 ---
 
 <BaseLayout title={title} description={description} ogType="article">
   <div id="reading-progress" aria-hidden="true"></div>
 
-  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-300" : "max-w-article"}`}>
+  <div
+    class={`mx-auto px-4 sm:px-6 py-16 w-full ${
+      hasToc ? "max-w-300" : "max-w-article"
+    }`}
+  >
     <!--
-      CRITICAL: `items-start` stops the aside from stretching to article height.
-      Without it, sticky has no scroll room and the TOC won't float.
-      `self-start` on the aside reinforces this per-item.
+      items-start  — prevents the aside from stretching to article height,
+                     which is required for position:sticky to work inside it.
+      self-start   — reinforces the same constraint per grid item.
     -->
-    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start" : ""}>
+    <div
+      class={
+        hasToc
+          ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start"
+          : ""
+      }
+    >
 
+      <!-- ── Article ──────────────────────────────────────── -->
       <article>
-        <Button href="/writing" variant="ghost" size="sm" class="mb-8 -ml-2 text-muted-foreground hover:text-foreground">
+        <Button
+          href="/writing"
+          variant="ghost"
+          size="sm"
+          class="mb-8 -ml-2 text-muted-foreground hover:text-foreground"
+        >
           ← All posts
         </Button>
 
         <header class="mb-10">
           <div class="mb-4 flex flex-wrap items-center gap-2">
-            <Badge variant={laneVariant[lane]} class="text-xs font-medium px-2.5 py-1">
+            <Badge
+              variant={laneVariant[lane]}
+              class="text-xs font-medium px-2.5 py-1"
+            >
               {formatLane(lane)}
             </Badge>
             {tags.map((tag) => (
@@ -75,13 +104,17 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
           </p>
 
           <div class="flex items-center gap-4 text-sm text-muted-foreground font-mono">
-            <time datetime={publishDate.toISOString()} class="flex items-center gap-1.5">
+            <time
+              datetime={publishDate.toISOString()}
+              class="flex items-center gap-1.5"
+            >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
                 <path d="M4 1v2M10 1v2M1 5.5h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
               </svg>
               {formattedDate}
             </time>
+
             {readingTime && (
               <>
                 <span aria-hidden="true" class="opacity-30">·</span>
@@ -99,14 +132,17 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
         <Separator class="mb-10" />
 
+        <!-- Article body — MDX slot -->
         <div class="article-prose">
           <slot />
         </div>
 
+        <!-- ── Post footer ───────────────────────────────── -->
         {(recommendedPosts.length > 0 || prevPost || nextPost) && (
           <>
             <Separator class="mt-14 mb-10" />
 
+            <!-- Tag cloud -->
             <div class="flex flex-wrap gap-2 mb-10">
               {tags.map((tag) => (
                 <span class="inline-flex items-center text-xs font-mono text-muted-foreground bg-muted px-2.5 py-1 rounded-md hover:text-foreground transition-colors cursor-default">
@@ -115,19 +151,29 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
               ))}
             </div>
 
+            <!-- Prev / Next navigation -->
             {(prevPost || nextPost) && (
-              <nav aria-label="Article navigation" class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 mb-12">
+              <nav
+                aria-label="Article navigation"
+                class="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 mb-12"
+              >
                 {prevPost ? (
                   <a
                     href={`/writing/${prevPost.id}`}
-                    class="group flex items-center gap-3 rounded-xl border bg-card px-4 py-3.5 transition-all hover:border-primary/40 hover:shadow-sm no-underline"
+                    class="group flex items-center gap-3 rounded-xl border bg-card
+                           px-4 py-3.5 transition-all hover:border-primary/40
+                           hover:shadow-sm no-underline"
                   >
-                    <span class="text-xl leading-none text-muted-foreground transition-transform group-hover:-translate-x-0.5 group-hover:text-primary shrink-0">←</span>
+                    <span class="text-xl leading-none text-muted-foreground transition-transform
+                                 group-hover:-translate-x-0.5 group-hover:text-primary shrink-0">
+                      ←
+                    </span>
                     <span class="min-w-0">
                       <span class="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
                         {formatNavMeta(prevPost)}
                       </span>
-                      <span class="block text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                      <span class="block text-sm font-semibold text-foreground
+                                   group-hover:text-primary transition-colors leading-snug line-clamp-2">
                         {prevPost.data.title}
                       </span>
                     </span>
@@ -135,20 +181,27 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
                 ) : (
                   <div class="hidden md:block" />
                 )}
+
                 {nextPost ? (
                   <a
                     href={`/writing/${nextPost.id}`}
-                    class="group flex items-center justify-end gap-3 rounded-xl border bg-card px-4 py-3.5 text-right transition-all hover:border-primary/40 hover:shadow-sm no-underline"
+                    class="group flex items-center justify-end gap-3 rounded-xl border bg-card
+                           px-4 py-3.5 text-right transition-all hover:border-primary/40
+                           hover:shadow-sm no-underline"
                   >
                     <span class="min-w-0">
                       <span class="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
                         {formatNavMeta(nextPost)}
                       </span>
-                      <span class="block text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                      <span class="block text-sm font-semibold text-foreground
+                                   group-hover:text-primary transition-colors leading-snug line-clamp-2">
                         {nextPost.data.title}
                       </span>
                     </span>
-                    <span class="text-xl leading-none text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary shrink-0">→</span>
+                    <span class="text-xl leading-none text-muted-foreground transition-transform
+                                 group-hover:translate-x-0.5 group-hover:text-primary shrink-0">
+                      →
+                    </span>
                   </a>
                 ) : (
                   <div class="hidden md:block" />
@@ -156,9 +209,13 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
               </nav>
             )}
 
+            <!-- Recommended posts -->
             {recommendedPosts.length > 0 && (
               <section aria-labelledby="discover-more-heading">
-                <p id="discover-more-heading" class="mb-4 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                <p
+                  id="discover-more-heading"
+                  class="mb-4 font-mono text-[11px] uppercase tracking-widest text-muted-foreground"
+                >
                   Discover more
                 </p>
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -172,9 +229,10 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
         )}
       </article>
 
+      <!-- ── Right-side TOC (desktop only) ────────────────── -->
       <!--
-        `self-start` ensures the aside is only as tall as its content.
-        This is what gives `sticky` inside `.toc-inner` room to operate.
+        self-start: aside is only as tall as its content.
+        This is what gives .toc-outer (sticky) room to operate.
       -->
       {hasToc && (
         <aside class="hidden lg:block self-start">
@@ -187,18 +245,26 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 </BaseLayout>
 
 <script>
+  // ── Reading progress bar ──────────────────────────────────
   const bar = document.getElementById("reading-progress");
   if (bar) {
-    window.addEventListener("scroll", () => {
-      const el = document.documentElement;
-      const total = el.scrollHeight - el.clientHeight;
-      bar.style.width = total > 0 ? (el.scrollTop / total) * 100 + "%" : "0%";
-    }, { passive: true });
+    window.addEventListener(
+      "scroll",
+      () => {
+        const el    = document.documentElement;
+        const total = el.scrollHeight - el.clientHeight;
+        bar.style.width = total > 0 ? (el.scrollTop / total) * 100 + "%" : "0%";
+      },
+      { passive: true }
+    );
   }
 
+  // ── Code block copy buttons ───────────────────────────────
   async function copyText(text: string): Promise<boolean> {
-    try { await navigator.clipboard.writeText(text); return true; }
-    catch {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.setAttribute("readonly", "");
@@ -212,63 +278,69 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
   }
 
   function enhanceCodeBlocks() {
-    document.querySelectorAll<HTMLElement>("article .article-prose pre").forEach((pre) => {
-      if (pre.parentElement?.classList.contains("code-block-wrap")) return;
+    document
+      .querySelectorAll<HTMLElement>("article .article-prose pre")
+      .forEach((pre) => {
+        if (pre.parentElement?.classList.contains("code-block-wrap")) return;
 
-      const code = pre.querySelector("code");
-      const raw = (code?.textContent ?? pre.textContent ?? "").replace(/\n$/, "");
-      const langClass = [...(code?.classList ?? [])].find((c) => c.startsWith("language-"));
-      const language = langClass ? langClass.replace("language-", "").replace(/[-_]/g, " ") : "text";
-      const lines = (code?.textContent ?? "")
-        .split("\n")
-        .filter((l, i, arr) => !(i === arr.length - 1 && l === "")).length;
+        const code     = pre.querySelector("code");
+        const raw      = (code?.textContent ?? pre.textContent ?? "").replace(/\n$/, "");
+        const langClass = [...(code?.classList ?? [])].find((c) =>
+          c.startsWith("language-")
+        );
+        const language = langClass
+          ? langClass.replace("language-", "").replace(/[-_]/g, " ")
+          : "text";
+        const lines = (code?.textContent ?? "")
+          .split("\n")
+          .filter((l, i, arr) => !(i === arr.length - 1 && l === "")).length;
 
-      const wrap = document.createElement("div");
-      wrap.className = "code-block-wrap";
+        const wrap = document.createElement("div");
+        wrap.className = "code-block-wrap";
 
-      const toolbar = document.createElement("div");
-      toolbar.className = "code-block-toolbar";
+        const toolbar = document.createElement("div");
+        toolbar.className = "code-block-toolbar";
 
-      const left = document.createElement("div");
-      left.className = "code-block-left";
+        const left = document.createElement("div");
+        left.className = "code-block-left";
 
-      const lang = document.createElement("span");
-      lang.className = "code-block-lang";
-      lang.textContent = language;
+        const lang = document.createElement("span");
+        lang.className = "code-block-lang";
+        lang.textContent = language;
 
-      const lineCount = document.createElement("span");
-      lineCount.className = "code-block-lines";
-      lineCount.textContent = `${lines} line${lines !== 1 ? "s" : ""}`;
+        const lineCount = document.createElement("span");
+        lineCount.className = "code-block-lines";
+        lineCount.textContent = `${lines} line${lines !== 1 ? "s" : ""}`;
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "code-copy-btn";
-      btn.setAttribute("aria-label", `Copy ${language} code`);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "code-copy-btn";
+        btn.setAttribute("aria-label", `Copy ${language} code`);
 
-      const copyIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
-      const checkIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M2 7l3.5 3.5L11 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      btn.innerHTML = `${copyIcon}<span>Copy</span>`;
+        const copyIcon  = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+        const checkIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M2 7l3.5 3.5L11 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        btn.innerHTML = `${copyIcon}<span>Copy</span>`;
 
-      btn.addEventListener("click", async () => {
-        const ok = await copyText(raw);
-        if (ok) {
-          btn.innerHTML = `${checkIcon}<span>Copied!</span>`;
-          btn.classList.add("copied");
-        }
-        setTimeout(() => {
-          btn.innerHTML = `${copyIcon}<span>Copy</span>`;
-          btn.classList.remove("copied");
-        }, 1800);
+        btn.addEventListener("click", async () => {
+          const ok = await copyText(raw);
+          if (ok) {
+            btn.innerHTML = `${checkIcon}<span>Copied!</span>`;
+            btn.classList.add("copied");
+          }
+          setTimeout(() => {
+            btn.innerHTML = `${copyIcon}<span>Copy</span>`;
+            btn.classList.remove("copied");
+          }, 1800);
+        });
+
+        left.appendChild(lang);
+        left.appendChild(lineCount);
+        toolbar.appendChild(left);
+        toolbar.appendChild(btn);
+        pre.parentElement?.insertBefore(wrap, pre);
+        wrap.appendChild(toolbar);
+        wrap.appendChild(pre);
       });
-
-      left.appendChild(lang);
-      left.appendChild(lineCount);
-      toolbar.appendChild(left);
-      toolbar.appendChild(btn);
-      pre.parentElement?.insertBefore(wrap, pre);
-      wrap.appendChild(toolbar);
-      wrap.appendChild(pre);
-    });
   }
 
   if (document.readyState === "loading") {

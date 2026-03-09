@@ -1,10 +1,14 @@
 ---
 // src/components/ui/TableOfContents.astro
+// Right-side sticky TOC for article and project pages.
+// Highlights the current section as the user scrolls,
+// scrolls the active link into view inside the panel,
+// and re-initialises correctly on Astro view transitions.
 
 interface Heading {
   depth: number;
-  slug: string;
-  text: string;
+  slug:  string;
+  text:  string;
 }
 interface Props {
   headings: Heading[];
@@ -15,11 +19,6 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
 {filtered.length > 1 && (
-  <!--
-    .toc-outer  = position:sticky (NO overflow — overflow kills sticky)
-    .toc-inner  = overflow-y:auto scroll container (NOT sticky)
-    aside       = self-start in the grid (so it doesn't stretch to article height)
-  -->
   <div class="toc-outer">
     <nav id="toc" aria-label="Table of contents" class="toc-inner no-scrollbar">
 
@@ -58,84 +57,149 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 
 <script>
   (() => {
-    const toc = document.getElementById("toc");
-    if (!toc) return;
+    // ── initToc ───────────────────────────────────────────────
+    // Called once on first load and again on every Astro page
+    // transition so the TOC always matches the current article.
+    function initToc() {
+      const toc = document.getElementById("toc");
+      if (!toc) return;
 
-    const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>("[data-heading]"));
-    if (!links.length) return;
+      const links = Array.from(
+        toc.querySelectorAll<HTMLAnchorElement>("[data-heading]")
+      );
+      if (!links.length) return;
 
-    const headingEls = links
-      .map((l) => document.getElementById(l.dataset.heading!))
-      .filter((el): el is HTMLElement => el !== null);
+      const headingEls = links
+        .map((l) => document.getElementById(l.dataset.heading!))
+        .filter((el): el is HTMLElement => el !== null);
 
-    const progressBar = document.getElementById("toc-progress-bar");
-    const progressPct = document.getElementById("toc-progress-pct");
+      const progressBar = document.getElementById("toc-progress-bar");
+      const progressPct = document.getElementById("toc-progress-pct");
 
-    let currentActive = "";
+      // Track the currently highlighted link so we don't thrash the DOM
+      // Start with a sentinel that won't match any real heading id so the
+      // first setActive() call always fires even when activeId === "".
+      let currentActive: string | null = null;
 
-    function setActive(id: string) {
-      if (id === currentActive) return;
-      currentActive = id;
-      links.forEach((link) => {
-        link.classList.toggle("active", link.dataset.heading === id);
-      });
-    }
+      function setActive(id: string) {
+        if (id === currentActive) return;
+        currentActive = id;
 
-    // Nav offset: read from CSS var --toc-top, fallback 88px
-    function getNavOffset(): number {
-      const raw = getComputedStyle(document.documentElement)
-        .getPropertyValue("--toc-top").trim();
-      if (!raw) return 88;
-      // parse px or rem
-      if (raw.endsWith("px")) return parseFloat(raw);
-      if (raw.endsWith("rem")) return parseFloat(raw) * 16;
-      return 88;
-    }
+        links.forEach((link) => {
+          const isActive = link.dataset.heading === id;
+          link.classList.toggle("active", isActive);
+        });
 
-    function onScroll() {
-      const offset = getNavOffset() + 8;
-
-      let activeId = headingEls[0]?.id ?? "";
-      for (const el of headingEls) {
-        if (el.getBoundingClientRect().top - offset <= 0) {
-          activeId = el.id;
-        } else {
-          break;
+        // Scroll the active link into view inside the TOC panel (no page jump)
+        const activeLink = toc!.querySelector<HTMLElement>(".toc-link.active");
+        if (activeLink) {
+          activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" });
         }
       }
-      setActive(activeId);
 
-      if (progressBar && progressPct) {
-        const doc = document.documentElement;
-        const total = doc.scrollHeight - doc.clientHeight;
-        const pct = total > 0 ? Math.round((doc.scrollTop / total) * 100) : 0;
-        progressBar.style.width = pct + "%";
-        progressPct.textContent = pct + "%";
+      // Read the CSS variable that Nav.astro maintains so the offset
+      // always matches the current nav visibility state.
+      function getNavOffset(): number {
+        const raw = getComputedStyle(document.documentElement)
+          .getPropertyValue("--toc-top")
+          .trim();
+        if (!raw) return 75;
+        if (raw.endsWith("px")) return parseFloat(raw);
+        if (raw.endsWith("rem")) return parseFloat(raw) * 16;
+        return 75;
       }
+
+      function onScroll() {
+        const offset = getNavOffset() + 24; // 24px breathing room below nav
+
+        // Walk headings top-to-bottom; the last one whose top edge is at or
+        // above the threshold line is the "current" section.
+        let activeId = headingEls[0]?.id ?? "";
+        for (const el of headingEls) {
+          if (el.getBoundingClientRect().top - offset <= 0) {
+            activeId = el.id;
+          } else {
+            break;
+          }
+        }
+        setActive(activeId);
+
+        // ── Reading progress bar ──────────────────────────────
+        if (progressBar && progressPct) {
+          const doc   = document.documentElement;
+          const total = doc.scrollHeight - doc.clientHeight;
+          const pct   = total > 0 ? Math.round((doc.scrollTop / total) * 100) : 0;
+          progressBar.style.width  = pct + "%";
+          progressPct.textContent  = pct + "%";
+        }
+      }
+
+      // ── Smooth-scroll on link click ───────────────────────
+      links.forEach((link) => {
+        // Clone to remove any stale listener from a previous init call
+        const fresh = link.cloneNode(true) as HTMLAnchorElement;
+        link.parentElement!.replaceChild(fresh, link);
+
+        fresh.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id     = fresh.dataset.heading!;
+          const target = document.getElementById(id);
+          if (!target) return;
+
+          const offset = getNavOffset() + 4;
+          const y = target.getBoundingClientRect().top + window.scrollY - offset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+          history.pushState(null, "", `#${id}`);
+          setActive(id); // optimistic — feels snappier than waiting for scroll event
+        });
+      });
+
+      // ── Reveal the panel (opacity transition in toc.css) ─
+      toc.classList.add("is-ready");
+
+      // Run immediately so the correct heading is active on load
+      // without the user needing to scroll first.
+      onScroll();
+
+      // ── Scroll listener ───────────────────────────────────
+      let ticking = false;
+      const scrollHandler = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          onScroll();
+          ticking = false;
+        });
+      };
+
+      window.addEventListener("scroll", scrollHandler, { passive: true });
+      window.addEventListener("resize", onScroll,      { passive: true });
+
+      // ── Cleanup on next transition ─────────────────────────
+      // Astro fires astro:before-swap before tearing down the old page.
+      // Remove the scroll listener to avoid memory leaks.
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          window.removeEventListener("scroll", scrollHandler);
+          window.removeEventListener("resize", onScroll);
+        },
+        { once: true }
+      );
     }
 
-    links.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const id = link.dataset.heading!;
-        const target = document.getElementById(id);
-        if (!target) return;
-        const offset = getNavOffset() + 4;
-        const y = target.getBoundingClientRect().top + window.scrollY - offset;
-        window.scrollTo({ top: y, behavior: "smooth" });
-        history.pushState(null, "", `#${id}`);
-      });
-    });
+    // ── Bootstrap ─────────────────────────────────────────────
+    // astro:page-load fires after every navigation (including first load)
+    // when View Transitions are enabled. It's safe to listen even when
+    // View Transitions are disabled — the event still fires once on load.
+    document.addEventListener("astro:page-load", initToc);
 
-    onScroll();
-
-    let ticking = false;
-    window.addEventListener("scroll", () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => { onScroll(); ticking = false; });
-    }, { passive: true });
-
-    window.addEventListener("resize", onScroll, { passive: true });
+    // Belt-and-suspenders: also run via DOMContentLoaded for setups
+    // where astro:page-load may fire before this script parses.
+    if (document.readyState !== "loading") {
+      initToc();
+    } else {
+      document.addEventListener("DOMContentLoaded", () => initToc(), { once: true });
+    }
   })();
 </script>
