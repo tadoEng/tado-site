@@ -1,19 +1,11 @@
 ---
 // src/components/ui/TableOfContents.astro
-// ─────────────────────────────────────────────────────────────
-// JetBrains-style sticky TOC:
-//   - Always visible as user scrolls the article
-//   - Active heading highlighted with accent bar
-//   - Smooth scroll-spy with requestAnimationFrame
-//   - Section progress mini-indicator
-// ─────────────────────────────────────────────────────────────
 
 interface Heading {
   depth: number;
   slug: string;
   text: string;
 }
-
 interface Props {
   headings: Heading[];
 }
@@ -23,114 +15,119 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
 {filtered.length > 1 && (
-  <nav
-    id="toc"
-    aria-label="Table of contents"
-    class="toc-container no-scrollbar"
-  >
-    <!-- Header -->
-    <div class="toc-header">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" class="shrink-0 opacity-50">
-        <path d="M1 3h10M1 6h7M1 9h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-      </svg>
-      <span>On this page</span>
-    </div>
+  <div class="toc-outer">
+    <nav id="toc" aria-label="Table of contents" class="toc-inner no-scrollbar">
 
-    <!-- Links -->
-    <ol class="toc-list" role="list">
-      {filtered.map((h) => (
-        <li role="listitem">
-          <a
-            href={`#${h.slug}`}
-            class={`toc-link ${h.depth === 3 ? "toc-link-sub" : "toc-link-h2"}`}
-            data-heading={h.slug}
-          >
-            {h.depth === 3 && (
-              <span class="toc-sub-indicator" aria-hidden="true" />
-            )}
-            <span class="toc-link-text">{h.text}</span>
-          </a>
-        </li>
-      ))}
-    </ol>
+      <!-- Header label -->
+      <p class="toc-header">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M1 3h10M1 6h7M1 9h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        On this page
+      </p>
 
-    <!-- Reading progress within article -->
-    <div class="toc-progress-wrap" aria-hidden="true">
-      <div class="toc-progress-track">
-        <div id="toc-progress-fill" class="toc-progress-fill" />
+      <!-- Links -->
+      <ol class="toc-list">
+        {filtered.map((h) => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              class:list={["toc-link", h.depth === 3 && "toc-link-sub"]}
+              data-heading={h.slug}
+            >
+              <span class="toc-pill" aria-hidden="true"></span>
+              <span class="toc-text">{h.text}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+
+      <!-- Page progress -->
+      <div class="toc-progress" aria-hidden="true">
+        <div class="toc-progress-track">
+          <div id="toc-progress-bar" class="toc-progress-bar"></div>
+        </div>
+        <span id="toc-progress-pct" class="toc-progress-pct">0%</span>
       </div>
-      <span id="toc-progress-label" class="toc-progress-label">0%</span>
-    </div>
-  </nav>
+
+    </nav>
+  </div>
 )}
 
 <script>
-  const toc = document.getElementById("toc");
-  if (!toc) throw new Error();
+  (() => {
+    const toc = document.getElementById("toc");
+    if (!toc) return;
 
-  const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>(".toc-link"));
-  const headingEls = links
-    .map((l) => document.getElementById(l.dataset.heading ?? ""))
-    .filter(Boolean) as HTMLElement[];
+    const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>("[data-heading]"));
+    if (!links.length) return;
 
-  const fill = document.getElementById("toc-progress-fill");
-  const label = document.getElementById("toc-progress-label");
+    const headingEls = links
+      .map((l) => document.getElementById(l.dataset.heading!))
+      .filter((el): el is HTMLElement => el !== null);
 
-  if (links.length === 0 || headingEls.length === 0) throw new Error();
+    const progressBar = document.getElementById("toc-progress-bar");
+    const progressPct = document.getElementById("toc-progress-pct");
 
-  // ── Active tracking ──────────────────────────────────────
-  const setActive = (id: string) => {
+    // ── Active link ────────────────────────────────────────────
+    let currentActive = "";
+
+    function setActive(id: string) {
+      if (id === currentActive) return;
+      currentActive = id;
+      links.forEach((link) => {
+        link.classList.toggle("active", link.dataset.heading === id);
+      });
+    }
+
+    // ── Scroll handler ─────────────────────────────────────────
+    const NAV_OFFSET = 88; // px — matches sticky nav height + buffer
+
+    function onScroll() {
+      // Active heading: last one whose top has passed the offset
+      let activeId = headingEls[0]?.id ?? "";
+      for (const el of headingEls) {
+        if (el.getBoundingClientRect().top - NAV_OFFSET <= 0) {
+          activeId = el.id;
+        } else {
+          break;
+        }
+      }
+      setActive(activeId);
+
+      // Progress bar
+      if (progressBar && progressPct) {
+        const doc = document.documentElement;
+        const total = doc.scrollHeight - doc.clientHeight;
+        const pct = total > 0 ? Math.round((doc.scrollTop / total) * 100) : 0;
+        progressBar.style.width = pct + "%";
+        progressPct.textContent = pct + "%";
+      }
+    }
+
+    // ── Smooth scroll on click ─────────────────────────────────
     links.forEach((link) => {
-      const isActive = link.dataset.heading === id;
-      link.classList.toggle("active", isActive);
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const id = link.dataset.heading!;
+        const target = document.getElementById(id);
+        if (!target) return;
+        const y = target.getBoundingClientRect().top + window.scrollY - NAV_OFFSET + 4;
+        window.scrollTo({ top: y, behavior: "smooth" });
+        history.pushState(null, "", `#${id}`);
+      });
     });
-  };
 
-  const OFFSET = 120;
+    // ── Init ───────────────────────────────────────────────────
+    onScroll();
 
-  const updateActive = () => {
-    let activeId = headingEls[0].id;
-    for (const heading of headingEls) {
-      if (heading.getBoundingClientRect().top - OFFSET <= 0) {
-        activeId = heading.id;
-      } else break;
-    }
-    setActive(activeId);
+    let ticking = false;
+    window.addEventListener("scroll", () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { onScroll(); ticking = false; });
+    }, { passive: true });
 
-    // Update progress
-    if (fill && label) {
-      const el = document.documentElement;
-      const pct = el.scrollHeight > el.clientHeight
-        ? Math.round((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100)
-        : 0;
-      fill.style.width = pct + "%";
-      label.textContent = pct + "%";
-    }
-  };
-
-  let ticking = false;
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => { updateActive(); ticking = false; });
-  };
-
-  updateActive();
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll);
-
-  // ── Smooth scroll with offset ─────────────────────────────
-  links.forEach((link) => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      const id = link.dataset.heading;
-      if (!id) return;
-      const target = document.getElementById(id);
-      if (!target) return;
-      const top = target.getBoundingClientRect().top + window.scrollY - OFFSET + 8;
-      window.scrollTo({ top, behavior: "smooth" });
-      // Update URL without jumping
-      history.pushState(null, "", `#${id}`);
-    });
-  });
+    window.addEventListener("resize", onScroll, { passive: true });
+  })();
 </script>

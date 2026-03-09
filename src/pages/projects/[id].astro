@@ -29,39 +29,35 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 ---
 
 <BaseLayout title={title} description={description}>
-
-  <!-- Reading progress bar -->
   <div id="reading-progress" aria-hidden="true"></div>
 
   <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1200px]" : "max-w-article"}`}>
-    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start" : ""}>
+    <!-- items-start is required for sticky TOC to work -->
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_268px] gap-16 items-start" : ""}>
 
       <article>
         <Button href="/projects" variant="ghost" size="sm" class="mb-8 -ml-2 text-muted-foreground hover:text-foreground">
           ← All projects
         </Button>
 
-        <!-- Project header -->
         <header class="mb-10">
           <div class="flex flex-wrap items-center gap-3 mb-4">
-            <h1 class="article-title">{title}</h1>
+            <h1 class="article-title mb-0">{title}</h1>
             <Badge variant={statusVariant[status]} class="text-xs font-medium px-2.5 py-1">
               {status}
             </Badge>
           </div>
 
-          <p class="text-lg text-muted-foreground leading-relaxed mb-6 max-w-prose">
+          <p class="article-dek mb-6 max-w-prose">
             {description}
           </p>
 
-          <!-- Stack chips -->
           <div class="flex flex-wrap gap-1.5 mb-6">
             {stack.map((tech) => (
               <Badge variant="secondary" class="font-mono text-xs">{tech}</Badge>
             ))}
           </div>
 
-          <!-- CTA buttons -->
           {(liveUrl || githubUrl) && (
             <div class="flex flex-wrap gap-2">
               {liveUrl && (
@@ -80,13 +76,11 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
         <Separator class="mb-10" />
 
-        <!-- Project body -->
         <div class="article-prose">
           <Content />
         </div>
 
-        <!-- Footer -->
-        <Separator class="mt-14 mb-10" />
+        <Separator class="mt-14 mb-8" />
 
         <div class="flex flex-wrap gap-2">
           {stack.map((tech) => (
@@ -97,9 +91,9 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
         </div>
       </article>
 
-      <!-- TOC sidebar -->
+      <!-- self-start keeps aside at natural height so sticky works -->
       {hasToc && (
-        <aside class="hidden lg:block">
+        <aside class="hidden lg:block self-start">
           <TableOfContents headings={headings} />
         </aside>
       )}
@@ -109,7 +103,6 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 </BaseLayout>
 
 <script>
-  // ── Reading progress ───────────────────────────────────────
   const bar = document.getElementById("reading-progress");
   if (bar) {
     window.addEventListener("scroll", () => {
@@ -119,12 +112,9 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
     }, { passive: true });
   }
 
-  // ── Code block enhancer ────────────────────────────────────
   async function copyText(text: string): Promise<boolean> {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch {
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.setAttribute("readonly", "");
@@ -151,21 +141,16 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
       const wrap = document.createElement("div");
       wrap.className = "code-block-wrap";
-
       const toolbar = document.createElement("div");
       toolbar.className = "code-block-toolbar";
-
       const left = document.createElement("div");
       left.className = "code-block-left";
-
       const lang = document.createElement("span");
       lang.className = "code-block-lang";
       lang.textContent = language;
-
       const lineCount = document.createElement("span");
       lineCount.className = "code-block-lines";
       lineCount.textContent = `${lines} line${lines !== 1 ? "s" : ""}`;
-
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "code-copy-btn";

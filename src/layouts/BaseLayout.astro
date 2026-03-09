@@ -35,10 +35,19 @@ const fullTitle =
 
     <script is:inline>
       (function () {
-        const stored = localStorage.getItem("starwind-theme");
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const theme = stored ?? (prefersDark ? "dark" : "light");
-        document.documentElement.className = theme;
+        const storageKey = "colorTheme";
+
+        const applyTheme = () => {
+          const stored = localStorage.getItem(storageKey);
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const isDark = stored === "dark" || (stored !== "light" && prefersDark);
+
+          document.documentElement.classList.toggle("dark", isDark);
+          document.documentElement.classList.toggle("light", !isDark);
+        };
+
+        applyTheme();
+        document.addEventListener("astro:after-swap", applyTheme);
       })();
     </script>
 

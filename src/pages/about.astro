@@ -3,27 +3,32 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { Button } from "@/components/starwind/button";
 import { Badge } from "@/components/starwind/badge";
 import { Separator } from "@/components/starwind/separator";
+import BrandGithub from "@tabler/icons/outline/brand-github.svg";
+import BrandLinkedin from "@tabler/icons/outline/brand-linkedin.svg";
+import Mail from "@tabler/icons/outline/mail.svg";
 
-const currentlyBuilding = [
+const approachPillars = [
   {
-    name: "ETABSSharp",
-    desc: "A C# wrapper for the ETABS API with an AI/MCP layer — natural language queries against live structural models.",
-    href: "/projects/etabssharp",
-    badge: "open source",
+    title: "Model first, interface second",
+    body: "I start with structural behavior and numerical logic, then design tooling around that model. A good interface should reveal engineering intent, not hide it.",
   },
   {
-    name: "Beam Calculator",
-    desc: "Browser-based shear, moment, and deflection diagrams. Live as you type.",
-    href: "/tools/beam-calculator",
-    badge: "live tool",
+    title: "Automation with engineering judgment",
+    body: "I automate repetitive ETABS and post-processing workflows, while keeping assumptions visible and reviewable. Speed only matters when trust is preserved.",
+  },
+  {
+    title: "Build for real project pressure",
+    body: "My tools are shaped by deadlines, coordination loops, and iteration cycles from building design work. Practical use in production is the benchmark.",
+  },
+  {
+    title: "Share the method, not just results",
+    body: "I publish derivations, implementation notes, and failures. Explaining the method makes the work reusable for other engineers and future projects.",
   },
 ];
 
 const skills = [
-  "Structural Analysis", "FEM / FEA", "High-Rise Design",
-  "ETABS", "Python", "C#", ".NET",
-  "TypeScript", "React", "Astro",
-  "WebAssembly", "Numerical Methods",
+  "Structural Analysis", "FEM / FEA", "ETABS",
+  "Python", "C#", ".NET", "TypeScript", "Rust",
 ];
 ---
 
@@ -31,84 +36,140 @@ const skills = [
   title="About"
   description="Structural engineer and app developer. I work on high-rise buildings and build the software tools I wish existed."
 >
-  <div class="mx-auto max-w-about px-6 py-16">
+  <div class="mx-auto max-w-[1080px] px-4 sm:px-6 py-16">
 
-    <div class="mb-10">
-      <p class="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">About</p>
-      <h1 class="text-4xl font-black tracking-tight mb-1">tado</h1>
-      <p class="font-mono text-sm text-primary uppercase tracking-wide">
+    <header class="mb-10">
+      <p class="mb-2 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">About</p>
+      <h1 class="mb-1 text-4xl font-black tracking-tight md:text-5xl">tado</h1>
+      <p class="font-mono text-sm uppercase tracking-wide text-primary">
         Structural Engineer &amp; App Developer
       </p>
-    </div>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-foreground/90">
+        I design real buildings and build engineering software. This site is where those two lines of work meet.
+      </p>
+    </header>
 
     <Separator class="mb-10" />
 
-    <div class="grid md:grid-cols-[1fr_1fr] gap-12 mb-12">
+    <div class="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_300px]">
 
-      <div class="prose prose-neutral dark:prose-invert max-w-none">
-        <p>
-          I'm a structural engineer who writes software. My day job involves designing
-          high-rise buildings and long-span structures. My side work involves building
-          the tools that make that process better.
-        </p>
-        <p>
-          The two disciplines reinforce each other in ways that aren't obvious until
-          you're doing both. Writing a finite element solver forces you to understand
-          the physics in a way that using one doesn't. Building an ETABS automation
-          forces you to understand what the software is actually doing under the hood.
-        </p>
-        <p>
-          This site documents that work. The writing spans FEM derivations, structural
-          analysis methods, and the software architecture behind the tools I build.
-          The tools are open, browser-based, and free to use.
-        </p>
-      </div>
+      <main>
+        <section class="mb-12">
+          <h2 class="mb-4 text-2xl font-bold tracking-tight">How I work</h2>
+          <div class="prose prose-neutral dark:prose-invert max-w-none">
+            <p>
+              I work at the intersection of structural engineering and software. In practice, that means
+              designing high-rise and long-span systems while also building tools that reduce iteration time,
+              improve clarity, and make technical decisions easier to communicate.
+            </p>
+            <p>
+              I care about the fundamentals: stiffness, load paths, boundary conditions, and how numerical
+              assumptions propagate into design decisions. Software gives me a way to operationalize that
+              thinking into workflows that are faster and more repeatable.
+            </p>
+            <p>
+              The writing here focuses on methods and implementation details. The project work focuses on
+              practical utilities that engineers can apply immediately.
+            </p>
+          </div>
+        </section>
 
-      <div>
-        <h2 class="font-bold text-base uppercase tracking-wider text-muted-foreground mb-4">
-          Currently building
-        </h2>
-        <div class="flex flex-col gap-3">
-          {currentlyBuilding.map((item) => (
-            <a
-              href={item.href}
-              class="group flex items-start justify-between gap-4 rounded-lg border bg-card px-4 py-3 transition-all hover:border-primary/30 hover:shadow-sm no-underline"
-            >
-              <div>
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold text-sm group-hover:text-primary transition-colors">
-                    {item.name}
-                  </span>
-                  <Badge variant="secondary" class="text-[10px] px-1.5 py-0">{item.badge}</Badge>
-                </div>
-                <p class="text-xs text-muted-foreground">{item.desc}</p>
-              </div>
-              <span class="text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-primary">
-                →
-              </span>
-            </a>
-          ))}
+        <section class="mb-12">
+          <h2 class="mb-4 text-2xl font-bold tracking-tight">Approach pillars</h2>
+          <div class="space-y-4">
+            {approachPillars.map((pillar) => (
+              <article class="rounded-lg border bg-card/40 px-4 py-4">
+                <h3 class="mb-1.5 text-base font-semibold tracking-tight">{pillar.title}</h3>
+                <p class="text-sm leading-relaxed text-muted-foreground">{pillar.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section class="mb-8">
+          <h2 class="mb-4 text-2xl font-bold tracking-tight">Focus areas</h2>
+          <div class="flex flex-wrap gap-2">
+            {skills.map((skill) => (
+              <Badge variant="secondary" class="font-mono text-xs">{skill}</Badge>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <aside class="lg:sticky lg:top-24 lg:self-start">
+        <div class="rounded-xl border bg-card/60 p-4">
+          <div class="mb-4 overflow-hidden rounded-lg border bg-muted/45 p-3">
+            <div class="relative h-32 rounded-md bg-gradient-to-br from-muted to-background">
+              <svg
+                viewBox="0 0 240 140"
+                class="absolute inset-0 h-full w-full opacity-80"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path d="M25 102 L65 48 L105 94 L148 39 L194 95" fill="none" stroke="hsl(var(--primary))" stroke-width="2.5" />
+                <path d="M25 116 H214" fill="none" stroke="hsl(var(--border))" stroke-width="1.5" />
+                <circle cx="65" cy="48" r="3.2" fill="hsl(var(--primary))" />
+                <circle cx="105" cy="94" r="3.2" fill="hsl(var(--primary))" />
+                <circle cx="148" cy="39" r="3.2" fill="hsl(var(--primary))" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <p class="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Profile</p>
+              <p class="mt-1 text-sm leading-relaxed text-foreground/90">
+                Structural engineer focused on computational methods, automation, and practical engineering tools.
+              </p>
+            </div>
+
+            <Separator />
+
+            <div>
+              <p class="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Primary stack</p>
+              <p class="mt-1 text-sm text-muted-foreground">ETABS, C#, .NET, Python, TypeScript</p>
+            </div>
+
+            <div>
+              <p class="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Domain</p>
+              <p class="mt-1 text-sm text-muted-foreground">Building structures, FEM workflows, engineering software UX</p>
+            </div>
+          </div>
         </div>
+      </aside>
+    </div>
+
+    <Separator class="my-10" />
+
+    <section>
+      <h2 class="mb-3 text-xl font-bold tracking-tight">Work with me</h2>
+      <p class="mb-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        If you are building structural engineering tooling, exploring computational design workflows, or want to discuss
+        implementation details, reach out.
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        <Button href="https://github.com/tadoEng" target="_blank" rel="noopener">
+          <BrandGithub class="size-4" />
+          GitHub
+        </Button>
+        <Button href="https://linkedin.com/in/yourprofile" variant="outline" target="_blank" rel="noopener">
+          <BrandLinkedin class="size-4" />
+          LinkedIn
+        </Button>
+        <Button href="mailto:hello@tado.pages.dev" variant="outline">
+          <Mail class="size-4" />
+          Email
+        </Button>
+        <Button href="/rss.xml" variant="ghost" target="_blank" rel="noopener">
+          RSS
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M7 17L17 7" />
+            <path d="M9 7h8v8" />
+          </svg>
+        </Button>
       </div>
-    </div>
-
-    <div class="mb-10">
-      <h2 class="font-bold text-base uppercase tracking-wider text-muted-foreground mb-4">Expertise</h2>
-      <div class="flex flex-wrap gap-2">
-        {skills.map((skill) => (
-          <Badge variant="secondary" class="font-mono text-xs">{skill}</Badge>
-        ))}
-      </div>
-    </div>
-
-    <Separator class="mb-8" />
-
-    <div class="flex flex-wrap gap-3">
-      <Button href="https://github.com/tadoEng" target="_blank" rel="noopener">GitHub ↗</Button>
-      <Button href="https://linkedin.com/in/yourprofile" variant="outline" target="_blank" rel="noopener">LinkedIn ↗</Button>
-      <Button href="mailto:hello@tado.pages.dev" variant="outline">Email</Button>
-      <Button href="/rss.xml" variant="ghost" target="_blank" rel="noopener">RSS</Button>
-    </div>
+    </section>
 
   </div>
 </BaseLayout>
