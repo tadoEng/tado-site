@@ -47,11 +47,11 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
   <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1200px]" : "max-w-article"}`}>
     <!--
-      KEY FIX: `items-start` on the grid prevents the aside from
-      stretching to match the article height. Without this, the aside
-      is as tall as the article and `sticky` has no room to scroll.
+      CRITICAL: `items-start` stops the aside from stretching to article height.
+      Without it, sticky has no scroll room and the TOC won't float.
+      `self-start` on the aside reinforces this per-item.
     -->
-    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_268px] gap-16 items-start" : ""}>
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start" : ""}>
 
       <article>
         <Button href="/writing" variant="ghost" size="sm" class="mb-8 -ml-2 text-muted-foreground hover:text-foreground">
@@ -173,9 +173,8 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
       </article>
 
       <!--
-        KEY FIX: `self-start` ensures the aside is only as tall as
-        its content. Combined with `sticky` in .toc-inner, the TOC
-        floats independently of the article's scroll height.
+        `self-start` ensures the aside is only as tall as its content.
+        This is what gives `sticky` inside `.toc-inner` room to operate.
       -->
       {hasToc && (
         <aside class="hidden lg:block self-start">

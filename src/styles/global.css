@@ -51,48 +51,67 @@ main { flex: 1; }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ARTICLE TYPOGRAPHY TOKENS (FLUID)
+   ARTICLE TYPOGRAPHY TOKENS
+   Modelled on JetBrains Blog — generous spacing, clear hierarchy
 ═══════════════════════════════════════════════════════════ */
 
 :root {
-  --article-font-family-display: "Outfit", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --article-font-family-body: "JetBrains Sans", Arial, "Helvetica Neue", Helvetica, sans-serif;
-  --article-title-size: 2.1875rem; /* 35px */
-  --article-title-size-sm-up: 2.6875rem; /* 43px at >=641 */
-  --article-title-line-height: 1.1143;
-  --article-title-line-height-desktop: 1.14; /* >=769 */
-  --article-title-margin-bottom: 1rem; /* 16px */
-  --article-title-margin-bottom-desktop: 1.4375rem; /* 23px */
-  --article-title-tracking: 0;
-  --article-h2-size: 1.75rem; /* 28px */
-  --article-h2-size-sm-up: 2.1875rem; /* 35px at >=641 */
-  --article-h2-line-height: 1.143;
-  --article-h2-line-height-sm-up: 1.2;
-  --article-body-size: 1rem;
-  --article-body-size-desktop: 1.1875rem; /* 19px */
-  --article-body-line-height: 1.56;
-  --article-body-line-height-desktop: 1.4736;
-  --article-dek-size: clamp(1.05rem, 1.35vw, 1.24rem);
+  --article-font-family-body: "Outfit", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  /* Article H1 */
+  --article-title-size: 2rem;
+  --article-title-size-sm-up: 2.5rem;
+  --article-title-size-lg-up: 2.875rem;
+  --article-title-line-height: 1.12;
+  --article-title-margin-bottom: 1rem;
+  --article-title-tracking: -0.02em;
+
+  /* Dek / lead paragraph */
+  --article-dek-size: clamp(1.05rem, 1.3vw, 1.2rem);
   --article-dek-line-height: 1.65;
-  --article-h3-size: clamp(1.2rem, 2vw, 1.65rem);
+
+  /* H2 — generous top margin like JetBrains */
+  --article-h2-size: 1.625rem;
+  --article-h2-size-sm-up: 1.875rem;
+  --article-h2-line-height: 1.22;
+
+  /* H3 */
+  --article-h3-size: clamp(1.125rem, 1.6vw, 1.3125rem);
   --article-h3-line-height: 1.3;
-  --article-h4-size: clamp(0.82rem, 1vw, 0.92rem);
-  --article-paragraph-gap: 1rem; /* 16px */
-  --article-paragraph-gap-desktop: 1.5rem; /* 24px */
+
+  /* H4 */
+  --article-h4-size: 0.8125rem;
+
+  /* Body */
+  --article-body-size: 1rem;
+  --article-body-size-desktop: 1.0625rem;
+  --article-body-line-height: 1.72;
+  --article-body-line-height-desktop: 1.78;
+
+  /* Paragraph gaps */
+  --article-paragraph-gap: 1.25rem;
+  --article-paragraph-gap-desktop: 1.625rem;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   ARTICLE TITLE
+   ARTICLE TITLE (H1)
 ═══════════════════════════════════════════════════════════ */
 
 .article-title {
   font-family: var(--article-font-family-body);
   font-size: var(--article-title-size);
-  font-weight: 530;
+  font-weight: 650;
   line-height: var(--article-title-line-height);
   margin: 0 0 var(--article-title-margin-bottom);
   letter-spacing: var(--article-title-tracking);
   color: hsl(var(--foreground));
+}
+
+@media (min-width: 641px) {
+  .article-title { font-size: var(--article-title-size-sm-up); }
+}
+@media (min-width: 769px) {
+  .article-title { font-size: var(--article-title-size-lg-up); }
 }
 
 .article-dek {
@@ -109,23 +128,10 @@ main { flex: 1; }
 
 .article-prose {
   font-family: var(--article-font-family-body);
-  color: hsl(var(--foreground) / 0.92);
+  color: hsl(var(--foreground) / 0.9);
   font-size: var(--article-body-size);
   line-height: var(--article-body-line-height);
   font-weight: 400;
-}
-
-.article-prose p {
-  margin: 0;
-  text-indent: 0;
-  font-weight: 400;
-  color: hsl(var(--foreground) / 0.86);
-}
-.article-prose p + p {
-  margin-top: var(--article-paragraph-gap);
-}
-.dark .article-prose p {
-  color: hsl(var(--foreground) / 0.9);
 }
 
 @media (min-width: 769px) {
@@ -133,71 +139,85 @@ main { flex: 1; }
     font-size: var(--article-body-size-desktop);
     line-height: var(--article-body-line-height-desktop);
   }
+}
+
+/* ── Paragraphs ─────────────────────────────────────────── */
+
+.article-prose p {
+  margin: 0;
+  text-indent: 0;
+  font-weight: 400;
+  color: hsl(var(--foreground) / 0.88);
+}
+.article-prose p + p {
+  margin-top: var(--article-paragraph-gap);
+}
+.dark .article-prose p {
+  color: hsl(var(--foreground) / 0.88);
+}
+@media (min-width: 769px) {
   .article-prose p + p {
     margin-top: var(--article-paragraph-gap-desktop);
   }
 }
 
-@media (min-width: 641px) {
-  .article-title {
-    font-size: var(--article-title-size-sm-up);
-  }
-}
-
-@media (min-width: 769px) {
-  .article-title {
-    line-height: var(--article-title-line-height-desktop);
-    margin-bottom: var(--article-title-margin-bottom-desktop);
-  }
-}
-
-/* ── Headings ───────────────────────────────────────────── */
+/* ── Shared scroll offset — tracks nav visibility via --toc-top ── */
 
 .article-prose h2,
 .article-prose h3,
 .article-prose h4 {
-  scroll-margin-top: 6rem;
-  font-family: var(--article-font-family-body);
-  color: hsl(var(--foreground));
+  scroll-margin-top: calc(var(--toc-top, 5.5rem) + 0.5rem);
 }
 
+/* ── H2 — JetBrains style: bold, generous top spacing ── */
+
 .article-prose h2 {
+  font-family: var(--article-font-family-body);
   font-size: var(--article-h2-size);
-  font-weight: 530;
+  font-weight: 600;
   line-height: var(--article-h2-line-height);
-  letter-spacing: 0;
-  margin-top: clamp(2.3rem, 3.8vw, 3.25rem);
-  margin-bottom: 0.5em;
+  letter-spacing: -0.015em;
+  color: hsl(var(--foreground));
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 641px) {
+  .article-prose h2 {
+    font-size: var(--article-h2-size-sm-up);
+    margin-top: 3.5rem;
+    margin-bottom: 1.125rem;
+  }
 }
 
 .article-prose h2::before {
   content: none;
 }
 
+/* ── H3 ─────────────────────────────────────────────────── */
+
 .article-prose h3 {
+  font-family: var(--article-font-family-body);
   font-size: var(--article-h3-size);
   line-height: var(--article-h3-line-height);
-  margin-top: clamp(1.8rem, 3vw, 2.5rem);
-  margin-bottom: clamp(0.5rem, 1vw, 0.9rem);
   font-weight: 530;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.012em;
+  color: hsl(var(--foreground));
+  margin-top: 2.25rem;
+  margin-bottom: 0.625rem;
 }
 
-@media (min-width: 641px) {
-  .article-prose h2 {
-    font-size: var(--article-h2-size-sm-up);
-    line-height: var(--article-h2-line-height-sm-up);
-  }
-}
+/* ── H4 ─────────────────────────────────────────────────── */
 
 .article-prose h4 {
+  font-family: var(--article-font-family-body);
   font-size: var(--article-h4-size);
-  margin-top: 1.75rem;
-  margin-bottom: 0.5rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: hsl(var(--muted-foreground));
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
 }
 
 /* ── Inline code ────────────────────────────────────────── */
@@ -227,14 +247,17 @@ main { flex: 1; }
 
 .article-prose ul,
 .article-prose ol {
-  margin-top: 0.75rem;
-  margin-bottom: 1.25rem;
+  margin-top: 0.875rem;
+  margin-bottom: 1.375rem;
   padding-left: 1.5rem;
 }
 .article-prose li {
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.45rem;
   color: hsl(var(--foreground) / 0.88);
   line-height: 1.75;
+}
+.article-prose li + li {
+  margin-top: 0.2rem;
 }
 .article-prose ul > li::marker {
   color: hsl(var(--primary) / 0.6);
@@ -456,31 +479,49 @@ main { flex: 1; }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TABLE OF CONTENTS — THE KEY FIX
+   TABLE OF CONTENTS
    
-   The layout grid uses `items-start` so the aside column
-   only takes up the height of its content. `.toc-outer` is
-   a zero-height wrapper; `.toc-inner` is the sticky panel.
-   This is the correct pattern — if the aside stretches to
-   match article height, `sticky` has nowhere to "stick to"
-   because it's already at the bottom of its scroll container.
+   LAYOUT CONTRACT:
+   ─────────────────────────────────────────────────────────
+   The ArticleLayout grid uses:
+     grid-cols-[minmax(0,1fr)_268px] + items-start
+   
+   `items-start` is the critical fix: it prevents the aside
+   from stretching to fill the article's full height.
+   When the aside is only as tall as the TOC panel,
+   `position: sticky` has room to scroll within the grid.
+   
+   Without `items-start`, the aside == article height,
+   and sticky never activates because the element is already
+   "at the bottom" of its scroll container.
+   ─────────────────────────────────────────────────────────
 ═══════════════════════════════════════════════════════════ */
 
-/* Wrapper — no height, just anchors the sticky context */
+/* ═══════════════════════════════════════════════════════════
+   TABLE OF CONTENTS — STICKY FIX
+   
+   KEY RULE: a sticky element must NOT have overflow set on it.
+   Solution: .toc-outer is the sticky anchor, .toc-scroll is the
+   inner overflow container. The aside must have self-start so it
+   doesn't stretch to article height (which kills sticky).
+═══════════════════════════════════════════════════════════ */
+
+/* The sticky anchor — no overflow here, ever */
 .toc-outer {
-  /* intentionally empty — just a block wrapper */
+  position: sticky;
+  top: var(--toc-top, 5.5rem);
+  transition: top 0.3s ease;
 }
 
-/* The sticky panel itself */
+/* Inner scroll container — separate from the sticky element */
 .toc-inner {
-  position: sticky;
-  /* 3px stress-bar + ~56px nav = 59px; add 16px breathing room */
-  top: 5rem;
-  max-height: calc(100vh - 6rem);
+  max-height: calc(100vh - var(--toc-top, 5.5rem) - 2rem);
   overflow-y: auto;
   padding: 0;
+  transition: max-height 0.3s ease;
 }
 
+/* Header label */
 .toc-header {
   display: flex;
   align-items: center;
@@ -495,6 +536,7 @@ main { flex: 1; }
   padding: 0 0 0 0.5rem;
 }
 
+/* Link list */
 .toc-list {
   list-style: none;
   padding: 0;
@@ -502,15 +544,16 @@ main { flex: 1; }
   border-left: 1.5px solid hsl(var(--border));
 }
 
-/* Individual link */
+/* Individual TOC link */
 .toc-link {
   position: relative;
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
   margin-left: -1.5px;
-  padding: 0.36rem 0.5rem 0.36rem 0.75rem;
-  font-size: 0.84rem;
+  padding: 0.34rem 0.5rem 0.34rem 0.875rem;
+  font-family: var(--article-font-family-body);
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: hsl(var(--muted-foreground));
   text-decoration: none;
@@ -524,24 +567,24 @@ main { flex: 1; }
   background: hsl(var(--muted) / 0.5);
 }
 
-/* Active state — matches JetBrains blue left bar */
+/* Active — JetBrains blue left border */
 .toc-link.active {
-  color: hsl(var(--foreground));
+  color: hsl(var(--primary));
   font-weight: 600;
   border-left-color: hsl(var(--primary));
   background: hsl(var(--primary) / 0.05);
 }
 
-/* The left pill indicator dot */
+/* Dot indicator — hidden on H2 */
 .toc-pill {
-  display: none; /* hidden on H2 links */
+  display: none;
 }
 
-/* Sub-links (H3) */
+/* Sub-links (H3) — indented */
 .toc-link-sub {
-  padding-left: 1.375rem;
-  font-size: 0.795rem;
-  color: hsl(var(--muted-foreground) / 0.8);
+  padding-left: 1.5rem;
+  font-size: 0.775rem;
+  color: hsl(var(--muted-foreground) / 0.75);
 }
 
 .toc-link-sub .toc-pill {
@@ -566,7 +609,7 @@ main { flex: 1; }
   min-width: 0;
 }
 
-/* Progress strip at bottom */
+/* Page progress */
 .toc-progress {
   display: flex;
   align-items: center;

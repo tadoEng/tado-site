@@ -15,10 +15,14 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
 {filtered.length > 1 && (
+  <!--
+    .toc-outer  = position:sticky (NO overflow — overflow kills sticky)
+    .toc-inner  = overflow-y:auto scroll container (NOT sticky)
+    aside       = self-start in the grid (so it doesn't stretch to article height)
+  -->
   <div class="toc-outer">
     <nav id="toc" aria-label="Table of contents" class="toc-inner no-scrollbar">
 
-      <!-- Header label -->
       <p class="toc-header">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           <path d="M1 3h10M1 6h7M1 9h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -26,7 +30,6 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
         On this page
       </p>
 
-      <!-- Links -->
       <ol class="toc-list">
         {filtered.map((h) => (
           <li>
@@ -42,7 +45,6 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
         ))}
       </ol>
 
-      <!-- Page progress -->
       <div class="toc-progress" aria-hidden="true">
         <div class="toc-progress-track">
           <div id="toc-progress-bar" class="toc-progress-bar"></div>
@@ -69,7 +71,6 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
     const progressBar = document.getElementById("toc-progress-bar");
     const progressPct = document.getElementById("toc-progress-pct");
 
-    // ── Active link ────────────────────────────────────────────
     let currentActive = "";
 
     function setActive(id: string) {
@@ -80,14 +81,23 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
       });
     }
 
-    // ── Scroll handler ─────────────────────────────────────────
-    const NAV_OFFSET = 88; // px — matches sticky nav height + buffer
+    // Nav offset: read from CSS var --toc-top, fallback 88px
+    function getNavOffset(): number {
+      const raw = getComputedStyle(document.documentElement)
+        .getPropertyValue("--toc-top").trim();
+      if (!raw) return 88;
+      // parse px or rem
+      if (raw.endsWith("px")) return parseFloat(raw);
+      if (raw.endsWith("rem")) return parseFloat(raw) * 16;
+      return 88;
+    }
 
     function onScroll() {
-      // Active heading: last one whose top has passed the offset
+      const offset = getNavOffset() + 8;
+
       let activeId = headingEls[0]?.id ?? "";
       for (const el of headingEls) {
-        if (el.getBoundingClientRect().top - NAV_OFFSET <= 0) {
+        if (el.getBoundingClientRect().top - offset <= 0) {
           activeId = el.id;
         } else {
           break;
@@ -95,7 +105,6 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
       }
       setActive(activeId);
 
-      // Progress bar
       if (progressBar && progressPct) {
         const doc = document.documentElement;
         const total = doc.scrollHeight - doc.clientHeight;
@@ -105,20 +114,19 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
       }
     }
 
-    // ── Smooth scroll on click ─────────────────────────────────
     links.forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const id = link.dataset.heading!;
         const target = document.getElementById(id);
         if (!target) return;
-        const y = target.getBoundingClientRect().top + window.scrollY - NAV_OFFSET + 4;
+        const offset = getNavOffset() + 4;
+        const y = target.getBoundingClientRect().top + window.scrollY - offset;
         window.scrollTo({ top: y, behavior: "smooth" });
         history.pushState(null, "", `#${id}`);
       });
     });
 
-    // ── Init ───────────────────────────────────────────────────
     onScroll();
 
     let ticking = false;
