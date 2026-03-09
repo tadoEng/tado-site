@@ -1,5 +1,9 @@
 ---
 // src/components/ui/ProjectRow.astro
+// ─────────────────────────────────────────────────────────────
+// Uses project.slug (not project.id) for the href so URLs are
+// clean:  /projects/etabssharp  not  /projects/etabssharp.mdx
+// ─────────────────────────────────────────────────────────────
 import { Badge } from "@/components/starwind/badge";
 import type { CollectionEntry } from "astro:content";
 
@@ -9,7 +13,7 @@ interface Props {
 }
 
 const { project, index } = Astro.props;
-const { title, description, stack, status, liveUrl, githubUrl } = project.data;
+const { title, description, stack, status } = project.data;
 
 const statusVariant = {
   live:     "success",
@@ -19,14 +23,14 @@ const statusVariant = {
 ---
 
 <a
-  href={`/projects/${project.id}`}
+  href={`/projects/${project.slug}`}
   class="group grid grid-cols-[3rem_1fr_auto] items-start gap-4
          rounded-lg px-3 py-4 border border-transparent
          transition-all duration-150
          hover:bg-card hover:border-border hover:shadow-sm
          no-underline"
 >
-  <!-- Number -->
+  <!-- Index number -->
   <span class="font-mono text-xs text-muted-foreground pt-0.5 select-none">
     {String(index + 1).padStart(2, "0")}
   </span>
@@ -44,7 +48,6 @@ const statusVariant = {
     <p class="text-xs text-muted-foreground">
       {description}
     </p>
-    <!-- Stack chips -->
     <div class="flex flex-wrap gap-1 mt-0.5">
       {stack.map((tech) => (
         <Badge variant="outline" class="text-[10px] px-1.5 py-0 font-mono">

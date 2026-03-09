@@ -15,11 +15,12 @@ export async function GET(context: APIContext) {
       "Computational structural engineering, finite element methods, and the tools I build.",
     site: context.site!,
     items: sorted.map((post) => ({
-      title: post.data.title,
-      pubDate: post.data.publishDate,
+      title:       post.data.title,
+      pubDate:     post.data.publishDate,
       description: post.data.description,
-      link: `/writing/${post.id}/`,
-      categories: post.data.tags,
+      // Use slug (no extension) for clean URLs in the feed
+      link:        `/writing/${post.slug}/`,
+      categories:  post.data.tags,
     })),
     customData: `<language>en-us</language>`,
   });
