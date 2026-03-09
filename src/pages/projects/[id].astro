@@ -58,11 +58,79 @@ const statusVariant = {
 
     <Separator class="mb-8" />
 
-    <div class="prose prose-neutral dark:prose-invert max-w-none
-                prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0
-                prose-a:text-primary">
+    <div class="article-prose prose prose-neutral dark:prose-invert max-w-none
+                prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
       <Content />
     </div>
 
   </div>
 </BaseLayout>
+
+<script>
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      return ok;
+    }
+  }
+
+  function enhanceCodeBlocks() {
+    const blocks = document.querySelectorAll("article .article-prose pre, .article-prose pre");
+    blocks.forEach((pre) => {
+      if (pre.parentElement?.classList.contains("code-block-wrap")) return;
+
+      const code = pre.querySelector("code");
+      const raw = (code?.textContent ?? pre.textContent ?? "").replace(/\n$/, "");
+      const languageClass = [...(code?.classList ?? [])].find((c) => c.startsWith("language-"));
+      const language = (languageClass ? languageClass.replace("language-", "") : "text")
+        .replace(/[-_]/g, " ");
+
+      const wrap = document.createElement("div");
+      wrap.className = "code-block-wrap";
+
+      const toolbar = document.createElement("div");
+      toolbar.className = "code-block-toolbar";
+
+      const lang = document.createElement("span");
+      lang.className = "code-block-lang";
+      lang.textContent = language;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "code-copy-btn";
+      btn.textContent = "Copy";
+      btn.setAttribute("aria-label", `Copy ${language} code`);
+
+      btn.addEventListener("click", async () => {
+        const ok = await copyText(raw);
+        btn.textContent = ok ? "Copied" : "Copy failed";
+        btn.classList.toggle("copied", ok);
+        setTimeout(() => {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+        }, 1400);
+      });
+
+      toolbar.append(lang, btn);
+      pre.parentElement?.insertBefore(wrap, pre);
+      wrap.append(toolbar, pre);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", enhanceCodeBlocks, { once: true });
+  } else {
+    enhanceCodeBlocks();
+  }
+</script>

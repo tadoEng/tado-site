@@ -33,7 +33,7 @@ export default defineConfig({
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],
     shikiConfig: {
-      themes: { light: "github-light", dark: "github-dark" },
+      themes: { light: "one-light", dark: "one-dark-pro" },
       wrap: true,
     },
   },
