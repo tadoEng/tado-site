@@ -1,0 +1,123 @@
+---
+title: "Talking to ETABS in Natural Language: ETABSSharp + MCP"
+description: "I built an MCP server on top of ETABSSharp that lets AI assistants query, modify, and run analysis on ETABS models through plain English. Here's how it works."
+publishDate: 2026-04-08
+lane: "dev"
+tags: ["etabs", "ai", "mcp", "csharp", "automation"]
+featured: false
+draft: false
+readingTime: 11
+---
+
+What if you could ask your AI assistant:
+
+> *"What's the maximum story drift in load case EQ-X? Is it within the 0.5% limit?"*
+
+And it would query your open ETABS model, run the check, and answer — without
+you writing a single line of code?
+
+That's what ETABSSharp + MCP enables.
+
+## What is MCP?
+
+The **Model Context Protocol** (MCP) is an open standard that lets AI assistants
+(Claude, Cursor, VS Code Copilot, etc.) call external tools through a defined interface.
+
+Instead of copy-pasting data into a chat window, the AI can directly invoke
+tools — query a database, run a calculation, read a file — and use the results
+in its response.
+
+## The ETABSSharp MCP server
+
+The MCP server exposes ETABSSharp methods as **tools** that any MCP-compatible
+AI client can call:
+
+```json
+{
+  "tools": [
+    {
+      "name": "get_story_drifts",
+      "description": "Get story drift results for all load cases",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "loadCase": { "type": "string", "description": "Optional filter by load case name" }
+        }
+      }
+    },
+    {
+      "name": "get_frame_forces",
+      "description": "Get axial, shear, and moment for frame elements"
+    },
+    {
+      "name": "run_analysis",
+      "description": "Run the structural analysis on the current model"
+    }
+  ]
+}
+```
+
+## A real workflow
+
+With Claude Desktop configured to use the ETABSSharp MCP server:
+
+**Me:** "Check if any story in EQ-X exceeds the 0.5% drift limit"
+
+**Claude (calling `get_story_drifts`):**
+
+> Story drift results for EQ-X:
+> - Level 1: 0.28% ✓
+> - Level 2: 0.41% ✓
+> - Level 3: **0.53%** ⚠️ exceeds 0.5% limit
+> - Level 4: 0.38% ✓
+>
+> Level 3 exceeds the limit by 0.03%. You may want to review the lateral
+> stiffness at that level — either increasing column sizes or adding a
+> shear wall at that story.
+
+The AI didn't just read a number — it applied engineering judgement to the result.
+
+## How to set it up
+
+### 1. Install ETABSSharp
+
+```bash
+dotnet add package ETABSSharp
+```
+
+### 2. Run the MCP server
+
+```bash
+etabssharp-mcp --port 3000
+```
+
+This starts the MCP server and connects to the running ETABS instance
+on your machine.
+
+### 3. Configure Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "etabs": {
+      "command": "etabssharp-mcp",
+      "args": ["--port", "3000"]
+    }
+  }
+}
+```
+
+Now Claude can see your ETABS model.
+
+## What this changes
+
+The bottleneck in structural engineering isn't analysis — it's interpretation.
+Running 50 load combinations takes seconds. Checking which members fail and why
+takes hours.
+
+An AI that can query results, apply code checks, and explain what it finds
+changes that ratio significantly.
+
+ETABSSharp + MCP is early-stage. The tool set is small. But the direction is clear.
+
+**GitHub:** [github.com/yourusername/etabssharp](https://github.com/yourusername/etabssharp)

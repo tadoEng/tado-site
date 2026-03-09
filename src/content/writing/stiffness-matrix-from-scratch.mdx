@@ -1,0 +1,190 @@
+---
+title: "The Stiffness Matrix from First Principles"
+description: "Where does the element stiffness matrix actually come from? A full derivation from virtual work, through shape functions, to the 12×12 frame element matrix you use every day."
+publishDate: 2026-04-15
+lane: "structural"
+tags: ["theory", "fem", "structural", "implementation"]
+featured: false
+draft: false
+readingTime: 18
+---
+
+Every finite element analysis software — ETABS, SAP2000, ANSYS, your own Python solver —
+is built on the same foundation: the element stiffness matrix.
+
+You've probably used it. But where does it actually come from?
+
+This post derives it from scratch — starting from virtual work, moving through
+shape functions, ending at the 12×12 matrix for a 3D frame element.
+No black boxes.
+
+## The core idea
+
+A structural element resists deformation. The stiffness matrix $[K]$ captures
+how much — it maps nodal displacements $\{u\}$ to nodal forces $\{F\}$:
+
+$$
+[K] \{u\} = \{F\}
+$$
+
+For a single element with $n$ degrees of freedom, $[K]$ is an $n \times n$ matrix.
+For a full structure, we assemble all element matrices into a global $[K]$.
+
+## Virtual work principle
+
+The derivation starts with the **principle of virtual work**:
+
+> For a body in equilibrium, the virtual work done by external forces through
+> any virtual displacement equals the virtual strain energy stored internally.
+
+$$
+\delta W_{ext} = \delta W_{int}
+$$
+
+For a bar element under virtual nodal displacement $\{\delta u\}$:
+
+$$
+\{\delta u\}^T \{F\} = \int_V \{\delta \varepsilon\}^T \{\sigma\} \, dV
+$$
+
+This is the foundation. Now we need to connect strains to displacements.
+
+## Shape functions
+
+A 2-node bar element has 2 DOF: $u_1$ and $u_2$ (axial displacements).
+We assume the displacement varies **linearly** along the element:
+
+$$
+u(x) = \underbrace{\left(1 - \frac{x}{L}\right)}_{N_1(x)} u_1 + \underbrace{\frac{x}{L}}_{N_2(x)} u_2
+$$
+
+$N_1$ and $N_2$ are the **shape functions** — they define how the interior
+displacement field is interpolated from the nodal values.
+
+In matrix form:
+
+$$
+u(x) = [N(x)] \{u\} = [N_1 \quad N_2] \begin{Bmatrix} u_1 \\ u_2 \end{Bmatrix}
+$$
+
+## Strain-displacement relationship
+
+For a bar in axial loading, strain is:
+
+$$
+\varepsilon = \frac{du}{dx} = [B] \{u\}
+$$
+
+where $[B]$ is the **strain-displacement matrix**, found by differentiating $[N]$:
+
+$$
+[B] = \frac{d[N]}{dx} = \left[-\frac{1}{L} \quad \frac{1}{L}\right]
+$$
+
+## Assembling the stiffness matrix
+
+With linear elastic material, $\{\sigma\} = E \{\varepsilon\} = E [B] \{u\}$.
+
+Substituting into the virtual work equation:
+
+$$
+\{\delta u\}^T \{F\} = \int_0^L \{\delta u\}^T [B]^T E [B] \{u\} \, A \, dx
+$$
+
+Since $\{\delta u\}^T$ is arbitrary, we can factor it out:
+
+$$
+\{F\} = \underbrace{\left( \int_0^L [B]^T E [B] A \, dx \right)}_{[K]} \{u\}
+$$
+
+For a bar with constant $E$, $A$:
+
+$$
+[K] = \frac{EA}{L} \begin{bmatrix} 1 & -1 \\ -1 & 1 \end{bmatrix}
+$$
+
+That's the 2×2 stiffness matrix for an axial bar element — derived entirely from
+first principles.
+
+## Extending to a 2D beam element
+
+A 2D Euler–Bernoulli beam element has 4 DOF: two transverse displacements
+$v_1$, $v_2$ and two rotations $\theta_1$, $\theta_2$.
+
+The shape functions are **cubic** (Hermite polynomials):
+
+$$
+v(x) = N_1 v_1 + N_2 \theta_1 + N_3 v_2 + N_4 \theta_2
+$$
+
+where:
+
+$$
+N_1 = 1 - 3\xi^2 + 2\xi^3, \quad N_2 = L(\xi - 2\xi^2 + \xi^3)
+$$
+$$
+N_3 = 3\xi^2 - 2\xi^3, \quad N_4 = L(-\xi^2 + \xi^3), \quad \xi = x/L
+$$
+
+The curvature (analogous to strain for bending) is $\kappa = d^2v/dx^2 = [B]\{u\}$.
+The stiffness matrix follows the same integral:
+
+$$
+[K] = \int_0^L [B]^T EI [B] \, dx = \frac{EI}{L^3}
+\begin{bmatrix}
+12 & 6L & -12 & 6L \\
+6L & 4L^2 & -6L & 2L^2 \\
+-12 & -6L & 12 & -6L \\
+6L & 2L^2 & -6L & 4L^2
+\end{bmatrix}
+$$
+
+This is the **Euler–Bernoulli beam stiffness matrix** — you'll find this exact
+matrix in every structural analysis textbook.
+
+## The 12×12 3D frame element
+
+Combining axial, bending (two planes), torsion, and shear DOF gives the full
+12×12 matrix used in ETABS, SAP2000, and every general-purpose FEM solver.
+
+The assembly process is always the same:
+1. Define shape functions for each DOF
+2. Compute $[B]$ by differentiation
+3. Integrate $[K] = \int [B]^T [D] [B] \, dV$
+4. Transform from local to global coordinates via $[K]_{global} = [T]^T [K]_{local} [T]$
+
+## Implementing it in Python
+
+```python
+import numpy as np
+
+def bar_stiffness(E: float, A: float, L: float) -> np.ndarray:
+    """2x2 stiffness matrix for an axial bar element."""
+    k = (E * A / L)
+    return k * np.array([[1, -1], [-1, 1]])
+
+def beam_stiffness(E: float, I: float, L: float) -> np.ndarray:
+    """4x4 Euler-Bernoulli beam element stiffness matrix.
+    DOF order: [v1, θ1, v2, θ2]
+    """
+    k = E * I / L**3
+    return k * np.array([
+        [ 12,   6*L,  -12,   6*L],
+        [6*L, 4*L**2, -6*L, 2*L**2],
+        [-12,  -6*L,   12,  -6*L],
+        [6*L, 2*L**2, -6*L, 4*L**2],
+    ])
+```
+
+In the next post in this series, we'll assemble these element matrices into a global
+stiffness matrix, apply boundary conditions, and solve for displacements —
+building a complete 2D frame solver from scratch.
+
+## What this tells you
+
+Every result ETABS gives you flows from this integral. The "stiffness matrix" isn't
+a magic number lookup — it's a compact representation of how a physical element
+resists deformation, derived from strain energy and virtual work.
+
+Understanding the derivation doesn't change your day-to-day workflow. But when a model
+gives you a surprising result, it tells you where to look.

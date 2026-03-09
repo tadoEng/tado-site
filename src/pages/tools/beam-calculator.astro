@@ -1,0 +1,17 @@
+---
+// src/pages/tools/beam-calculator.astro
+import ToolLayout from "@layouts/ToolLayout.astro";
+import BeamCalculator from "@components/tools/BeamCalculator";
+---
+
+<ToolLayout
+  title="Beam Calculator"
+  description="Shear force, bending moment, and deflection diagrams for common beam configurations. Calculations run entirely in your browser."
+  status="live"
+  relatedPosts={[
+    { id: "stiffness-matrix-from-scratch", title: "The Stiffness Matrix from First Principles" },
+  ]}
+>
+  <!-- client:load — hydrates immediately, tool is interactive on first paint -->
+  <BeamCalculator client:load />
+</ToolLayout>

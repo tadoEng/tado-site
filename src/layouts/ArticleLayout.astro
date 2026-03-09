@@ -1,0 +1,120 @@
+---
+// src/layouts/ArticleLayout.astro
+// ─────────────────────────────────────────────────────────────
+// Wraps every blog post. Prose width, reading progress bar,
+// article header, and prev/next navigation.
+// ─────────────────────────────────────────────────────────────
+import BaseLayout from "./BaseLayout.astro";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { Separator } from "@/components/starwind/separator";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  post: CollectionEntry<"writing">;
+  prevPost?: { id: string; data: { title: string } };
+  nextPost?: { id: string; data: { title: string } };
+}
+
+const { post, prevPost, nextPost } = Astro.props;
+const { title, description, publishDate, lane, tags, readingTime } = post.data;
+
+// Format date for display
+const formattedDate = new Date(publishDate).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+// Lane → Starwind Badge variant mapping
+const laneVariant = {
+  structural: "warning",   // amber-ish
+  dev: "info",             // blue-ish
+  tool: "success",         // green-ish
+  workflow: "secondary",
+} as const;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  ogType="article"
+>
+  <!-- Reading progress bar (thin line, top of viewport) -->
+  <div id="reading-progress"></div>
+
+  <article class="mx-auto max-w-prose px-4 py-16">
+    <!-- ── Article header ──────────────────────────────── -->
+    <header class="mb-8">
+      <!-- Lane + tags row -->
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <Badge variant={laneVariant[lane]}>
+          {lane.charAt(0).toUpperCase() + lane.slice(1)}
+        </Badge>
+        {tags.map((tag) => (
+          <Badge variant="outline" class="text-xs">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+
+      <!-- Title -->
+      <h1 class="mb-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+        {title}
+      </h1>
+
+      <!-- Meta: date + read time -->
+      <div class="flex items-center gap-3 text-sm text-muted-foreground font-mono">
+        <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+        {readingTime && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>{readingTime} min read</span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <Separator class="mb-8" />
+
+    <!-- ── MDX content ─────────────────────────────────── -->
+    <!-- `prose` class comes from @tailwindcss/typography -->
+    <div class="prose prose-neutral dark:prose-invert max-w-none">
+      <slot />
+    </div>
+
+    <Separator class="mt-12 mb-8" />
+
+    <!-- ── Prev / Next navigation ──────────────────────── -->
+    <nav
+      aria-label="Article navigation"
+      class="flex items-center justify-between gap-4"
+    >
+      {prevPost ? (
+        <Button variant="outline" href={`/writing/${prevPost.id}`} size="sm">
+          ← {prevPost.data.title}
+        </Button>
+      ) : (
+        <div />
+      )}
+      {nextPost && (
+        <Button variant="outline" href={`/writing/${nextPost.id}`} size="sm">
+          {nextPost.data.title} →
+        </Button>
+      )}
+    </nav>
+  </article>
+</BaseLayout>
+
+<!-- Reading progress bar script -->
+<script>
+  const bar = document.getElementById("reading-progress");
+  if (bar) {
+    window.addEventListener("scroll", () => {
+      const el = document.documentElement;
+      const scrolled = el.scrollTop;
+      const total = el.scrollHeight - el.clientHeight;
+      bar.style.width = total > 0 ? (scrolled / total) * 100 + "%" : "0%";
+    });
+  }
+</script>

@@ -1,0 +1,36 @@
+---
+// src/components/layout/Footer.astro
+import { Separator } from "@/components/starwind/separator";
+import { Button } from "@/components/starwind/button";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-auto">
+  <Separator />
+  <div class="mx-auto max-w-layout px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-sm text-muted-foreground">
+      © {year} Tado. Built with
+      <a
+        href="https://astro.build"
+        class="underline underline-offset-2 hover:text-foreground transition-colors"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Astro</a>
+      &amp;
+      <a
+        href="https://pages.cloudflare.com"
+        class="underline underline-offset-2 hover:text-foreground transition-colors"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Cloudflare Pages</a>.
+    </p>
+
+    <nav class="flex items-center gap-1" aria-label="Footer navigation">
+      <Button href="/writing"  variant="ghost" size="sm">Writing</Button>
+      <Button href="/projects" variant="ghost" size="sm">Projects</Button>
+      <Button href="/tools"    variant="ghost" size="sm">Tools</Button>
+      <Button href="/rss.xml"  variant="ghost" size="sm" target="_blank" rel="noopener">RSS</Button>
+    </nav>
+  </div>
+</footer>

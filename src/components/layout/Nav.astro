@@ -1,0 +1,104 @@
+---
+// src/components/layout/Nav.astro
+// ─────────────────────────────────────────────────────────────
+// Sticky nav with:
+//   - Stress-map gradient bar (top, 3px)
+//   - Logo
+//   - Desktop links
+//   - Starwind ThemeToggle
+//   - Starwind Sheet for mobile drawer
+// ─────────────────────────────────────────────────────────────
+import { Button } from "@/components/starwind/button";
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/starwind/sheet";
+import { Separator } from "@/components/starwind/separator";
+
+const navLinks = [
+  { href: "/",          label: "Home"     },
+  { href: "/writing",   label: "Writing"  },
+  { href: "/projects",  label: "Projects" },
+  { href: "/tools",     label: "Tools"    },
+  { href: "/about",     label: "About"    },
+];
+
+const pathname = Astro.url.pathname;
+
+// Active check: exact match for home, startsWith for others
+function isActive(href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname.startsWith(href);
+}
+---
+
+<!-- Stress-map gradient bar — FEA contour signature -->
+<div class="stress-bar" aria-hidden="true"></div>
+
+<header
+  class="sticky top-[3px] z-50 w-full border-b bg-background/90 backdrop-blur-md"
+>
+  <div class="mx-auto flex max-w-layout items-center justify-between px-6 h-14">
+
+    <!-- ── Logo ──────────────────────────────────────────── -->
+    <a
+      href="/"
+      class="flex items-center gap-1.5 font-bold text-sm tracking-tight"
+      aria-label="Home"
+    >
+      <span class="text-primary" aria-hidden="true">✦</span>
+      <span>Tado</span>
+    </a>
+
+    <!-- ── Desktop nav ───────────────────────────────────── -->
+    <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+      {navLinks.map(({ href, label }) => (
+        <Button
+          href={href}
+          variant={isActive(href) ? "secondary" : "ghost"}
+          size="sm"
+        >
+          {label}
+        </Button>
+      ))}
+    </nav>
+
+    <!-- ── Right side: theme toggle + mobile menu ────────── -->
+    <div class="flex items-center gap-2">
+      <!-- ThemeToggle persists to localStorage automatically -->
+      <ThemeToggle />
+
+      <!-- Mobile hamburger — Sheet slide-out drawer -->
+      <Sheet>
+        <SheetTrigger>
+          <Button variant="ghost" size="icon" class="md:hidden" aria-label="Open menu">
+            <!-- Hamburger icon -->
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <line x1="2" y1="4.5"  x2="16" y2="4.5"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="2" y1="9"    x2="16" y2="9"    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="2" y1="13.5" x2="16" y2="13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </Button>
+        </SheetTrigger>
+
+        <SheetContent side="right" class="w-64">
+          <nav class="flex flex-col gap-1 mt-6" aria-label="Mobile navigation">
+            {navLinks.map(({ href, label }) => (
+              <Button
+                href={href}
+                variant={isActive(href) ? "secondary" : "ghost"}
+                class="justify-start"
+              >
+                {label}
+              </Button>
+            ))}
+            <Separator class="my-3" />
+            <div class="flex items-center gap-2 px-2 text-sm text-muted-foreground">
+              <span>Theme</span>
+              <ThemeToggle />
+            </div>
+          </nav>
+        </SheetContent>
+      </Sheet>
+    </div>
+
+  </div>
+</header>

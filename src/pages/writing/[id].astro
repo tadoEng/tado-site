@@ -1,0 +1,31 @@
+---
+// src/pages/writing/[id].astro
+// Note: Astro v5 Content Layer uses `id` not `slug`
+import ArticleLayout from "@layouts/ArticleLayout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("writing", (p) => !p.data.draft);
+  const sorted = posts.sort(
+    (a, b) => a.data.publishDate.valueOf() - b.data.publishDate.valueOf()
+  );
+
+  return sorted.map((post, index) => ({
+    params: { id: post.id },
+    props: {
+      post,
+      prevPost: index > 0 ? sorted[index - 1] : undefined,
+      nextPost: index < sorted.length - 1 ? sorted[index + 1] : undefined,
+    },
+  }));
+}
+
+const { post, prevPost, nextPost } = Astro.props;
+
+// Astro v5: use render() imported from astro:content
+const { Content } = await render(post);
+---
+
+<ArticleLayout post={post} prevPost={prevPost} nextPost={nextPost}>
+  <Content />
+</ArticleLayout>

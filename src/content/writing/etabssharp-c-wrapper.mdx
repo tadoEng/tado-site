@@ -1,0 +1,119 @@
+---
+title: "Building ETABSSharp: A C# Wrapper for the ETABS API"
+description: "The raw ETABS API is verbose and weakly typed. Here's how I designed a fluent C# wrapper that makes structural automation actually enjoyable to write."
+publishDate: 2026-04-01
+lane: "dev"
+tags: ["etabs", "csharp", "open-source", "automation"]
+featured: true
+draft: false
+readingTime: 14
+---
+
+The ETABS API is powerful. It exposes almost everything — model geometry, load cases,
+analysis results, design checks. But working with it directly is painful.
+
+Methods are stringly typed. There's no IntelliSense guidance on what parameters mean.
+Error handling is COM-era `ref` parameters. You end up writing the same boilerplate
+fifty times per script.
+
+**ETABSSharp** is a C# wrapper that fixes this.
+
+## The problem with the raw API
+
+Here's a typical raw ETABS API call to get story drift results:
+
+```csharp
+// Raw ETABS API — what you normally write
+int numberResults = 0;
+string[] storyName = Array.Empty<string>();
+string[] loadCase = Array.Empty<string>();
+string[] stepType = Array.Empty<string>();
+double[] stepNum = Array.Empty<double>();
+double[] driftX = Array.Empty<double>();
+double[] driftY = Array.Empty<double>();
+
+int ret = model.Results.StoryDrifts(
+    ref numberResults,
+    ref storyName,
+    ref loadCase,
+    ref stepType,
+    ref stepNum,
+    ref driftX,
+    ref driftY
+);
+
+if (ret != 0) throw new Exception("Failed to get story drifts");
+```
+
+That's 15 lines to get one result table. The `ref` arrays are pre-allocated
+by the API — there's no type safety on what you pass in, and if `ret != 0`
+you get no information about what went wrong.
+
+## The ETABSSharp approach
+
+With ETABSSharp, the same operation becomes:
+
+```csharp
+// ETABSSharp — what you write instead
+var drifts = await etabs.Results.StoryDriftsAsync();
+
+foreach (var drift in drifts)
+{
+    Console.WriteLine($"{drift.Story} | {drift.LoadCase} | DX: {drift.DriftX:F4}");
+}
+```
+
+Strongly typed. Async-capable. `drift.Story` gives you IntelliSense.
+If the API call fails, you get a proper exception with a message.
+
+## Architecture decisions
+
+### 1. Thin wrapper, not an abstraction
+
+ETABSSharp wraps the ETABS COM API — it doesn't try to replace it.
+Every method maps 1:1 to an ETABS API call. This means:
+
+- The full API surface is available
+- Behaviour is predictable — if ETABS does it, ETABSSharp can do it
+- No magic or hidden logic
+
+### 2. Result types instead of `ref` parameters
+
+Every output is a strongly typed record:
+
+```csharp
+public record StoryDrift(
+    string Story,
+    string LoadCase,
+    string StepType,
+    double StepNum,
+    double DriftX,
+    double DriftY
+);
+```
+
+### 3. Fluent access pattern
+
+```csharp
+var etabs = await ETABSSharp.Connect();
+
+// Navigate to what you need
+var frameForces = await etabs
+    .Results
+    .FrameForces(loadCase: "1.2D + 1.6L");
+```
+
+## The AI layer
+
+The real reason I built ETABSSharp isn't just the cleaner API — it's what the
+clean API enables: an **MCP server** that lets AI assistants talk to ETABS directly.
+
+More on that in the next post.
+
+## Get it
+
+- **GitHub:** [github.com/yourusername/etabssharp](https://github.com/yourusername/etabssharp)
+- **NuGet:** `dotnet add package ETABSSharp`
+
+If you're automating ETABS with C# and you have questions, open an issue or
+reach out. I use this in production work every week.

@@ -1,0 +1,131 @@
+---
+// src/components/ui/PostCard.astro
+// ─────────────────────────────────────────────────────────────
+// Used in: homepage post grid, /writing index
+// ─────────────────────────────────────────────────────────────
+import { Badge } from "@/components/starwind/badge";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  post: CollectionEntry<"writing">;
+}
+
+const { post } = Astro.props;
+const { title, description, publishDate, lane, tags, readingTime } = post.data;
+
+const formattedDate = new Date(publishDate).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
+
+const laneVariant = {
+  structural: "warning",
+  dev: "info",
+  tool: "success",
+  workflow: "secondary",
+} as const;
+
+// First tag only shown on card to keep it compact
+const primaryTag = tags[0];
+---
+
+<a
+  href={`/writing/${post.id}`}
+  class="group flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm
+         transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
+         hover:border-primary/30 overflow-hidden no-underline"
+>
+  <!-- Thumbnail area — domain-specific SVG -->
+  <div
+    class="h-28 bg-muted flex items-center justify-center border-b overflow-hidden"
+    aria-hidden="true"
+  >
+    {lane === "structural" && (
+      <!-- Mini structural diagram -->
+      <svg viewBox="0 0 160 70" class="w-4/5 opacity-60" xmlns="http://www.w3.org/2000/svg">
+        <line x1="20" y1="55" x2="140" y2="55" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+        <line x1="35" y1="30" x2="35" y2="55" stroke="currentColor" stroke-width="2.5" opacity="0.5"/>
+        <line x1="80" y1="30" x2="80" y2="55" stroke="currentColor" stroke-width="2.5" opacity="0.5"/>
+        <line x1="125" y1="30" x2="125" y2="55" stroke="currentColor" stroke-width="2.5" opacity="0.5"/>
+        <path d="M35,30 Q80,45 125,30" fill="none" stroke="hsl(var(--primary))" stroke-width="2" opacity="0.8"/>
+        <circle cx="35"  cy="30" r="3" fill="hsl(var(--primary))" opacity="0.8"/>
+        <circle cx="80"  cy="30" r="3" fill="hsl(var(--primary))" opacity="0.8"/>
+        <circle cx="125" cy="30" r="3" fill="hsl(var(--primary))" opacity="0.8"/>
+      </svg>
+    )}
+    {lane === "dev" && (
+      <!-- Code brackets -->
+      <svg viewBox="0 0 160 70" class="w-4/5 opacity-60" xmlns="http://www.w3.org/2000/svg">
+        <text x="20"  y="45" font-family="monospace" font-size="28" fill="hsl(var(--primary))" opacity="0.7">{"<"}/{">"}</text>
+        <text x="90"  y="30" font-family="monospace" font-size="11" fill="currentColor" opacity="0.4">const k =</text>
+        <text x="90"  y="45" font-family="monospace" font-size="11" fill="currentColor" opacity="0.4">EI / L³</text>
+      </svg>
+    )}
+    {lane === "tool" && (
+      <!-- Calculator icon -->
+      <svg viewBox="0 0 160 70" class="w-4/5 opacity-60" xmlns="http://www.w3.org/2000/svg">
+        <rect x="50" y="8" width="60" height="54" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+        <rect x="58" y="16" width="44" height="16" rx="2" fill="hsl(var(--primary))" opacity="0.2"/>
+        <circle cx="65" cy="45" r="4" fill="hsl(var(--primary))" opacity="0.6"/>
+        <circle cx="80" cy="45" r="4" fill="currentColor" opacity="0.3"/>
+        <circle cx="95" cy="45" r="4" fill="currentColor" opacity="0.3"/>
+      </svg>
+    )}
+    {lane === "workflow" && (
+      <!-- Flow arrows -->
+      <svg viewBox="0 0 160 70" class="w-4/5 opacity-60" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="25" width="35" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+        <rect x="63" y="25" width="35" height="20" rx="3" fill="none" stroke="hsl(var(--primary))" stroke-width="1.5" opacity="0.6"/>
+        <rect x="111" y="25" width="35" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+        <path d="M50,35 L63,35" stroke="currentColor" stroke-width="1.5" marker-end="url(#a)" opacity="0.5"/>
+        <path d="M98,35 L111,35" stroke="currentColor" stroke-width="1.5" marker-end="url(#a)" opacity="0.5"/>
+        <defs>
+          <marker id="a" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="currentColor" opacity="0.5"/>
+          </marker>
+        </defs>
+      </svg>
+    )}
+  </div>
+
+  <!-- Body -->
+  <div class="flex flex-col flex-1 p-4 gap-2">
+    <!-- Lane + primary tag -->
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <Badge variant={laneVariant[lane]} class="text-[10px] px-1.5 py-0.5">
+        {lane}
+      </Badge>
+      {primaryTag && (
+        <Badge variant="outline" class="text-[10px] px-1.5 py-0.5">
+          {primaryTag}
+        </Badge>
+      )}
+    </div>
+
+    <!-- Title -->
+    <h3 class="font-semibold text-sm leading-snug text-foreground group-hover:text-primary transition-colors">
+      {title}
+    </h3>
+
+    <!-- Excerpt -->
+    <p class="text-xs text-muted-foreground line-clamp-2 flex-1">
+      {description}
+    </p>
+
+    <!-- Footer meta -->
+    <div class="flex items-center justify-between pt-2 border-t mt-auto">
+      <time
+        datetime={new Date(publishDate).toISOString()}
+        class="text-[11px] text-muted-foreground font-mono"
+      >
+        {formattedDate}
+      </time>
+      {readingTime && (
+        <span class="text-[11px] text-muted-foreground font-mono">
+          {readingTime} min
+        </span>
+      )}
+    </div>
+  </div>
+</a>

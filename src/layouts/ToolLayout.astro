@@ -1,0 +1,69 @@
+---
+// src/layouts/ToolLayout.astro
+// Full-width layout for interactive tool pages.
+// Keeps nav/footer but gives the tool island maximum space.
+import BaseLayout from "./BaseLayout.astro";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { Separator } from "@/components/starwind/separator";
+
+interface Props {
+  title: string;
+  description: string;
+  status?: "live" | "beta" | "soon";
+  relatedPosts?: { id: string; title: string }[];
+}
+
+const {
+  title,
+  description,
+  status = "live",
+  relatedPosts = [],
+} = Astro.props;
+
+const statusVariant = {
+  live:  "success",
+  beta:  "warning",
+  soon:  "secondary",
+} as const;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="mx-auto max-w-layout px-6 py-12">
+
+    <!-- Tool header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <h1 class="text-2xl font-bold tracking-tight">{title}</h1>
+        <Badge variant={statusVariant[status]}>{status}</Badge>
+      </div>
+      <p class="text-muted-foreground max-w-2xl">{description}</p>
+    </div>
+
+    <Separator class="mb-8" />
+
+    <!-- Tool slot — React island goes here -->
+    <div class="mb-12">
+      <slot />
+    </div>
+
+    <!-- Related reading -->
+    {relatedPosts.length > 0 && (
+      <>
+        <Separator class="mb-6" />
+        <div>
+          <p class="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-3">
+            Related reading
+          </p>
+          <div class="flex flex-col gap-2">
+            {relatedPosts.map((p) => (
+              <Button href={`/writing/${p.id}`} variant="ghost" class="justify-start">
+                → {p.title}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+</BaseLayout>

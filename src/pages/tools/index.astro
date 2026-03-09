@@ -1,0 +1,46 @@
+---
+// src/pages/tools/index.astro
+import BaseLayout from "@layouts/BaseLayout.astro";
+import ToolCard from "@components/ui/ToolCard.astro";
+---
+
+<BaseLayout
+  title="Tools"
+  description="Free, open, browser-based structural engineering calculators — beam analysis, section properties, column buckling, and more."
+>
+  <div class="mx-auto max-w-layout px-6 py-16">
+
+    <div class="mb-10">
+      <h1 class="text-3xl font-black tracking-tight mb-2">Engineering Tools</h1>
+      <p class="text-muted-foreground max-w-xl">
+        Open, browser-based calculators. No login, no installation.
+        All calculations run locally in your browser.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <ToolCard
+        title="Beam Calculator"
+        description="Shear, moment, and deflection diagrams for simply supported, fixed-end, and cantilever beams. Live as you type."
+        href="/tools/beam-calculator"
+        icon="⌇"
+        status="live"
+      />
+      <ToolCard
+        title="Section Properties"
+        description="Second moment of area, elastic and plastic section moduli, radius of gyration. Standard and custom cross-sections."
+        href="/tools/section-properties"
+        icon="◎"
+        status="beta"
+      />
+      <ToolCard
+        title="Column Buckling"
+        description="Euler and Johnson–Parabola curves with automatic method selection based on slenderness ratio."
+        href="/tools/column-buckling"
+        icon="↑"
+        status="soon"
+      />
+    </div>
+
+  </div>
+</BaseLayout>

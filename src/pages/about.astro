@@ -1,0 +1,124 @@
+---
+// src/pages/about.astro
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { Button } from "@/components/starwind/button";
+import { Badge } from "@/components/starwind/badge";
+import { Separator } from "@/components/starwind/separator";
+---
+
+<BaseLayout
+  title="About"
+  description="Structural engineer and app developer. I work on high-rise buildings and build the software tools I wish existed."
+>
+  <div class="mx-auto max-w-prose px-4 py-16">
+
+    <!-- Name + role -->
+    <div class="mb-10">
+      <p class="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">About</p>
+      <h1 class="text-4xl font-black tracking-tight mb-1">Your Name</h1>
+      <p class="font-mono text-sm text-primary uppercase tracking-wide">
+        Structural Engineer &amp; App Developer
+      </p>
+    </div>
+
+    <Separator class="mb-10" />
+
+    <!-- Bio -->
+    <div class="prose prose-neutral dark:prose-invert max-w-none mb-10">
+      <p>
+        I'm a structural engineer who writes software. My day job involves designing
+        high-rise buildings and long-span structures. My side work involves building
+        the tools that make that process better.
+      </p>
+      <p>
+        The two disciplines reinforce each other in ways that aren't obvious until
+        you're doing both. Writing a finite element solver forces you to understand
+        the physics in a way that using one doesn't. Building an ETABS automation
+        forces you to understand what the software is actually doing under the hood.
+      </p>
+      <p>
+        This site documents that work. The writing spans FEM derivations, structural
+        analysis methods, and the software architecture behind the tools I build.
+        The tools are open, browser-based, and free to use.
+      </p>
+    </div>
+
+    <!-- What I'm building -->
+    <div class="mb-10">
+      <h2 class="font-bold text-base uppercase tracking-wider text-muted-foreground mb-4">
+        Currently building
+      </h2>
+      <div class="flex flex-col gap-3">
+        {[
+          {
+            name: "ETABSSharp",
+            desc: "A C# wrapper for the ETABS API with an AI/MCP layer — natural language queries against live structural models.",
+            href: "/projects/etabssharp",
+            badge: "open source",
+          },
+          {
+            name: "Beam Calculator",
+            desc: "Browser-based shear, moment, and deflection diagrams. Live as you type.",
+            href: "/tools/beam-calculator",
+            badge: "live tool",
+          },
+        ].map(({ name, desc, href, badge }) => (
+          <a
+            href={href}
+            class="group flex items-start justify-between gap-4 rounded-lg border bg-card
+                   px-4 py-3 transition-all hover:border-primary/30 hover:shadow-sm no-underline"
+          >
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-sm group-hover:text-primary transition-colors">
+                  {name}
+                </span>
+                <Badge variant="secondary" class="text-[10px] px-1.5 py-0">{badge}</Badge>
+              </div>
+              <p class="text-xs text-muted-foreground">{desc}</p>
+            </div>
+            <span class="text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-primary">
+              →
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Skills chips -->
+    <div class="mb-10">
+      <h2 class="font-bold text-base uppercase tracking-wider text-muted-foreground mb-4">
+        Expertise
+      </h2>
+      <div class="flex flex-wrap gap-2">
+        {[
+          "Structural Analysis", "FEM / FEA", "High-Rise Design",
+          "ETABS", "Python", "C#", ".NET",
+          "TypeScript", "React", "Astro",
+          "WebAssembly", "Numerical Methods",
+        ].map((skill) => (
+          <Badge variant="secondary" class="font-mono text-xs">{skill}</Badge>
+        ))}
+      </div>
+    </div>
+
+    <Separator class="mb-8" />
+
+    <!-- Links -->
+    <div class="flex flex-wrap gap-3">
+      <Button href="https://github.com/yourusername" target="_blank" rel="noopener">
+        GitHub ↗
+      </Button>
+      <Button href="https://linkedin.com/in/yourprofile" variant="outline" target="_blank" rel="noopener">
+        LinkedIn ↗
+      </Button>
+      <Button href="mailto:hello@your-domain.com" variant="outline">
+        Email
+      </Button>
+      <Button href="/rss.xml" variant="ghost" target="_blank" rel="noopener">
+        RSS
+      </Button>
+    </div>
+
+  </div>
+</BaseLayout>
