@@ -1,4 +1,5 @@
 ---
+// src/pages/writing/[id].astro
 import ArticleLayout from "@layouts/ArticleLayout.astro";
 import { getCollection, render } from "astro:content";
 
@@ -7,20 +8,37 @@ export async function getStaticPaths() {
   const sorted = posts.sort(
     (a, b) => a.data.publishDate.valueOf() - b.data.publishDate.valueOf()
   );
+
   return sorted.map((post, index) => ({
     params: { id: post.id },
     props: {
       post,
       prevPost: index > 0 ? sorted[index - 1] : undefined,
       nextPost: index < sorted.length - 1 ? sorted[index + 1] : undefined,
+      // Recommend by lane first, then recency — exclude self, take top 2
+      recommendedPosts: posts
+        .filter((candidate) => candidate.id !== post.id)
+        .sort((a, b) => {
+          const laneMatchA = a.data.lane === post.data.lane ? 1 : 0;
+          const laneMatchB = b.data.lane === post.data.lane ? 1 : 0;
+          if (laneMatchA !== laneMatchB) return laneMatchB - laneMatchA;
+          return b.data.publishDate.valueOf() - a.data.publishDate.valueOf();
+        })
+        .slice(0, 2),
     },
   }));
 }
 
-const { post, prevPost, nextPost } = Astro.props;
+const { post, prevPost, nextPost, recommendedPosts } = Astro.props;
 const { Content, headings } = await render(post);
 ---
 
-<ArticleLayout post={post} headings={headings} prevPost={prevPost} nextPost={nextPost}>
+<ArticleLayout
+  post={post}
+  headings={headings}
+  prevPost={prevPost}
+  nextPost={nextPost}
+  recommendedPosts={recommendedPosts}
+>
   <Content />
 </ArticleLayout>

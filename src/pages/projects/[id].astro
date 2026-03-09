@@ -1,4 +1,5 @@
 ---
+// src/pages/projects/[id].astro
 import BaseLayout from "@layouts/BaseLayout.astro";
 import TableOfContents from "@components/ui/TableOfContents.astro";
 import { Badge } from "@/components/starwind/badge";
@@ -28,59 +29,98 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 ---
 
 <BaseLayout title={title} description={description}>
-  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1180px]" : "max-w-article"}`}>
-    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px] gap-14 items-start" : ""}>
+
+  <!-- Reading progress bar -->
+  <div id="reading-progress" aria-hidden="true"></div>
+
+  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1200px]" : "max-w-article"}`}>
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start" : ""}>
+
       <article>
-        <Button href="/projects" variant="ghost" size="sm" class="mb-8 -ml-2">
+        <Button href="/projects" variant="ghost" size="sm" class="mb-8 -ml-2 text-muted-foreground hover:text-foreground">
           ← All projects
         </Button>
 
-        <header class="mb-8">
-          <div class="flex flex-wrap items-center gap-3 mb-3">
-            <h1 class="text-3xl font-black tracking-tight">{title}</h1>
-            <Badge variant={statusVariant[status]}>{status}</Badge>
+        <!-- Project header -->
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <h1 class="article-title">{title}</h1>
+            <Badge variant={statusVariant[status]} class="text-xs font-medium px-2.5 py-1">
+              {status}
+            </Badge>
           </div>
-          <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
 
-          <div class="flex flex-wrap gap-1.5 mt-4">
+          <p class="text-lg text-muted-foreground leading-relaxed mb-6 max-w-prose">
+            {description}
+          </p>
+
+          <!-- Stack chips -->
+          <div class="flex flex-wrap gap-1.5 mb-6">
             {stack.map((tech) => (
               <Badge variant="secondary" class="font-mono text-xs">{tech}</Badge>
             ))}
           </div>
 
+          <!-- CTA buttons -->
           {(liveUrl || githubUrl) && (
-            <div class="flex flex-wrap gap-2 mt-5">
+            <div class="flex flex-wrap gap-2">
               {liveUrl && (
-                <Button href={liveUrl} target="_blank" rel="noopener" size="sm">Live demo ↗</Button>
+                <Button href={liveUrl} target="_blank" rel="noopener noreferrer" size="sm">
+                  Live demo ↗
+                </Button>
               )}
               {githubUrl && (
-                <Button href={githubUrl} variant="outline" target="_blank" rel="noopener" size="sm">GitHub ↗</Button>
+                <Button href={githubUrl} variant="outline" target="_blank" rel="noopener noreferrer" size="sm">
+                  GitHub ↗
+                </Button>
               )}
             </div>
           )}
         </header>
 
-        <Separator class="mb-8" />
+        <Separator class="mb-10" />
 
-        <div class="article-prose prose prose-neutral dark:prose-invert max-w-none
-                    prose-headings:font-bold prose-headings:tracking-tight
-                    prose-code:font-mono prose-code:text-[0.92em]
-                    prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+        <!-- Project body -->
+        <div class="article-prose">
           <Content />
+        </div>
+
+        <!-- Footer -->
+        <Separator class="mt-14 mb-10" />
+
+        <div class="flex flex-wrap gap-2">
+          {stack.map((tech) => (
+            <span class="inline-flex items-center text-xs font-mono text-muted-foreground bg-muted px-2.5 py-1 rounded-md cursor-default">
+              {tech}
+            </span>
+          ))}
         </div>
       </article>
 
+      <!-- TOC sidebar -->
       {hasToc && (
         <aside class="hidden lg:block">
           <TableOfContents headings={headings} />
         </aside>
       )}
+
     </div>
   </div>
 </BaseLayout>
 
 <script>
-  async function copyText(text) {
+  // ── Reading progress ───────────────────────────────────────
+  const bar = document.getElementById("reading-progress");
+  if (bar) {
+    window.addEventListener("scroll", () => {
+      const el = document.documentElement;
+      const total = el.scrollHeight - el.clientHeight;
+      bar.style.width = total > 0 ? (el.scrollTop / total) * 100 + "%" : "0%";
+    }, { passive: true });
+  }
+
+  // ── Code block enhancer ────────────────────────────────────
+  async function copyText(text: string): Promise<boolean> {
     try {
       await navigator.clipboard.writeText(text);
       return true;
@@ -88,8 +128,7 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
+      Object.assign(ta.style, { position: "fixed", left: "-9999px" });
       document.body.appendChild(ta);
       ta.select();
       const ok = document.execCommand("copy");
@@ -99,15 +138,16 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
   }
 
   function enhanceCodeBlocks() {
-    const blocks = document.querySelectorAll("article .article-prose pre, .article-prose pre");
-    blocks.forEach((pre) => {
+    document.querySelectorAll<HTMLElement>("article .article-prose pre").forEach((pre) => {
       if (pre.parentElement?.classList.contains("code-block-wrap")) return;
 
       const code = pre.querySelector("code");
       const raw = (code?.textContent ?? pre.textContent ?? "").replace(/\n$/, "");
-      const languageClass = [...(code?.classList ?? [])].find((c) => c.startsWith("language-"));
-      const language = (languageClass ? languageClass.replace("language-", "") : "text")
-        .replace(/[-_]/g, " ");
+      const langClass = [...(code?.classList ?? [])].find((c) => c.startsWith("language-"));
+      const language = langClass ? langClass.replace("language-", "").replace(/[-_]/g, " ") : "text";
+      const lines = (code?.textContent ?? "")
+        .split("\n")
+        .filter((l, i, arr) => !(i === arr.length - 1 && l === "")).length;
 
       const wrap = document.createElement("div");
       wrap.className = "code-block-wrap";
@@ -115,27 +155,40 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
       const toolbar = document.createElement("div");
       toolbar.className = "code-block-toolbar";
 
+      const left = document.createElement("div");
+      left.className = "code-block-left";
+
       const lang = document.createElement("span");
       lang.className = "code-block-lang";
       lang.textContent = language;
 
+      const lineCount = document.createElement("span");
+      lineCount.className = "code-block-lines";
+      lineCount.textContent = `${lines} line${lines !== 1 ? "s" : ""}`;
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "code-copy-btn";
-      btn.textContent = "Copy";
       btn.setAttribute("aria-label", `Copy ${language} code`);
+
+      const copyIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+      const checkIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M2 7l3.5 3.5L11 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      btn.innerHTML = `${copyIcon}<span>Copy</span>`;
 
       btn.addEventListener("click", async () => {
         const ok = await copyText(raw);
-        btn.textContent = ok ? "Copied" : "Copy failed";
-        btn.classList.toggle("copied", ok);
+        if (ok) {
+          btn.innerHTML = `${checkIcon}<span>Copied!</span>`;
+          btn.classList.add("copied");
+        }
         setTimeout(() => {
-          btn.textContent = "Copy";
+          btn.innerHTML = `${copyIcon}<span>Copy</span>`;
           btn.classList.remove("copied");
-        }, 1400);
+        }, 1800);
       });
 
-      toolbar.append(lang, btn);
+      left.append(lang, lineCount);
+      toolbar.append(left, btn);
       pre.parentElement?.insertBefore(wrap, pre);
       wrap.append(toolbar, pre);
     });
