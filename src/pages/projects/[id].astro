@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
+import TableOfContents from "@components/ui/TableOfContents.astro";
 import { Badge } from "@/components/starwind/badge";
 import { Button } from "@/components/starwind/button";
 import { Separator } from "@/components/starwind/separator";
@@ -15,54 +16,66 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { title, description, stack, status, liveUrl, githubUrl } = project.data;
-const { Content } = await render(project);
+const { Content, headings } = await render(project);
 
 const statusVariant = {
   live:     "success",
   wip:      "warning",
   archived: "secondary",
 } as const;
+
+const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1;
 ---
 
 <BaseLayout title={title} description={description}>
-  <div class="mx-auto max-w-article px-6 py-16">
+  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1180px]" : "max-w-article"}`}>
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px] gap-14 items-start" : ""}>
+      <article>
+        <Button href="/projects" variant="ghost" size="sm" class="mb-8 -ml-2">
+          ← All projects
+        </Button>
 
-    <Button href="/projects" variant="ghost" size="sm" class="mb-8 -ml-2">
-      ← All projects
-    </Button>
+        <header class="mb-8">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h1 class="text-3xl font-black tracking-tight">{title}</h1>
+            <Badge variant={statusVariant[status]}>{status}</Badge>
+          </div>
+          <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
 
-    <header class="mb-8">
-      <div class="flex flex-wrap items-center gap-3 mb-3">
-        <h1 class="text-3xl font-black tracking-tight">{title}</h1>
-        <Badge variant={statusVariant[status]}>{status}</Badge>
-      </div>
-      <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            {stack.map((tech) => (
+              <Badge variant="secondary" class="font-mono text-xs">{tech}</Badge>
+            ))}
+          </div>
 
-      <div class="flex flex-wrap gap-1.5 mt-4">
-        {stack.map((tech) => (
-          <Badge variant="secondary" class="font-mono text-xs">{tech}</Badge>
-        ))}
-      </div>
-
-      {(liveUrl || githubUrl) && (
-        <div class="flex flex-wrap gap-2 mt-5">
-          {liveUrl && (
-            <Button href={liveUrl} target="_blank" rel="noopener" size="sm">Live demo ↗</Button>
+          {(liveUrl || githubUrl) && (
+            <div class="flex flex-wrap gap-2 mt-5">
+              {liveUrl && (
+                <Button href={liveUrl} target="_blank" rel="noopener" size="sm">Live demo ↗</Button>
+              )}
+              {githubUrl && (
+                <Button href={githubUrl} variant="outline" target="_blank" rel="noopener" size="sm">GitHub ↗</Button>
+              )}
+            </div>
           )}
-          {githubUrl && (
-            <Button href={githubUrl} variant="outline" target="_blank" rel="noopener" size="sm">GitHub ↗</Button>
-          )}
+        </header>
+
+        <Separator class="mb-8" />
+
+        <div class="article-prose prose prose-neutral dark:prose-invert max-w-none
+                    prose-headings:font-bold prose-headings:tracking-tight
+                    prose-code:font-mono prose-code:text-[0.92em]
+                    prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+          <Content />
         </div>
+      </article>
+
+      {hasToc && (
+        <aside class="hidden lg:block">
+          <TableOfContents headings={headings} />
+        </aside>
       )}
-    </header>
-
-    <Separator class="mb-8" />
-
-    <div class="article-prose prose prose-neutral dark:prose-invert max-w-none
-                prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
-      <Content />
     </div>
-
   </div>
 </BaseLayout>
 

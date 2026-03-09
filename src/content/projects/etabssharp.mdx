@@ -4,7 +4,7 @@ description: "A fluent C# wrapper for the ETABS structural analysis API, with an
 stack: ["C#", ".NET", "ETABS API", "MCP", "NuGet"]
 status: "live"
 order: 1
-githubUrl: "https://github.com/tadoEng/etabssharp"
+githubUrl: "https://github.com/tadoEng/EtabSharp"
 ---
 
 ## Problem
@@ -15,7 +15,7 @@ no IntelliSense guidance. Every automation script requires the same verbose boil
 
 ## Approach
 
-ETABSSharp wraps the raw COM API with:
+ETABSharp wraps the raw COM API with:
 
 - **Strong typing** — all outputs are typed records, not `ref` arrays
 - **Fluent access** — navigate the API as `etabs.Results.StoryDrifts()` rather than
@@ -51,7 +51,7 @@ The core API wrapper is stable. The MCP server is under development.
 Install from NuGet:
 
 ```bash
-dotnet add package ETABSSharp
+dotnet add package ETABSharp
 ```
 
 MCP server:

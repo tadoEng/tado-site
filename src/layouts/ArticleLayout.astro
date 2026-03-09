@@ -35,8 +35,8 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 <BaseLayout title={title} description={description} ogType="article">
   <div id="reading-progress"></div>
 
-  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1100px]" : "max-w-article"}`}>
-    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-12 items-start" : ""}>
+  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1180px]" : "max-w-article"}`}>
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px] gap-14 items-start" : ""}>
 
       <article>
         <Button href="/writing" variant="ghost" size="sm" class="mb-8 -ml-2">

@@ -14,17 +14,13 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
 {filtered.length > 1 && (
-  <nav id="toc" aria-label="Table of contents"
-    class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar">
-    <p class="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
-      On this page
-    </p>
-    <ol class="flex flex-col gap-0.5">
+  <nav id="toc" aria-label="Table of contents" class="toc-rail no-scrollbar">
+    <ol class="toc-list">
       {filtered.map((h) => (
         <li>
           <a
             href={`#${h.slug}`}
-            class={`toc-link block text-muted-foreground hover:text-foreground transition-colors py-0.5 ${h.depth === 3 ? "pl-3 text-xs" : "text-sm"}`}
+            class={`toc-link ${h.depth === 3 ? "toc-link-sub" : ""}`}
             data-heading={h.slug}
           >
             {h.text}
@@ -36,29 +32,48 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 )}
 
 <script>
-  const links = document.querySelectorAll<HTMLAnchorElement>(".toc-link");
-  if (links.length > 0) {
-    const headingIds = Array.from(links).map((l) => l.dataset.heading!);
-    const headingEls = headingIds
-      .map((id) => document.getElementById(id))
+  const toc = document.getElementById("toc");
+  if (toc) {
+    const links = Array.from(toc.querySelectorAll<HTMLAnchorElement>(".toc-link"));
+    const headingEls = links
+      .map((link) => document.getElementById(link.dataset.heading ?? ""))
       .filter(Boolean) as HTMLElement[];
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const link = document.querySelector<HTMLAnchorElement>(
-            `.toc-link[data-heading="${entry.target.id}"]`
-          );
-          if (!link) return;
-          if (entry.isIntersecting) {
-            links.forEach((l) => l.classList.remove("active"));
-            link.classList.add("active");
-          }
+    if (links.length > 0 && headingEls.length > 0) {
+      const setActive = (id: string) => {
+        links.forEach((link) => {
+          link.classList.toggle("active", link.dataset.heading === id);
         });
-      },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
-    );
+      };
 
-    headingEls.forEach((el) => observer.observe(el));
+      const updateActive = () => {
+        const offset = 140;
+        let activeId = headingEls[0].id;
+
+        for (const heading of headingEls) {
+          if (heading.getBoundingClientRect().top - offset <= 0) {
+            activeId = heading.id;
+          } else {
+            break;
+          }
+        }
+
+        setActive(activeId);
+      };
+
+      let ticking = false;
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          updateActive();
+          ticking = false;
+        });
+      };
+
+      updateActive();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
+    }
   }
 </script>
