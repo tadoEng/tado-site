@@ -1,0 +1,25 @@
+/* ═══════════════════════════════════════════════════════════
+   STRESS BAR + READING PROGRESS
+═══════════════════════════════════════════════════════════ */
+
+.stress-bar {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #2a4d9e 0%, #3a9ebf 18%, #4abf7a 36%,
+    #d4a847 55%, #e07040 75%, #c0634a 100%
+  );
+  opacity: 0.7;
+}
+
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  z-index: 200;
+  transition: width 0.1s linear;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(220 80% 60%));
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.4);
+}

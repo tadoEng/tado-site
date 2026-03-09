@@ -1,0 +1,261 @@
+/* ═══════════════════════════════════════════════════════════
+   ARTICLE TITLE (H1)
+═══════════════════════════════════════════════════════════ */
+
+.article-title {
+  font-family: var(--article-font-family-body);
+  font-size: var(--article-title-size);
+  font-weight: 650;
+  line-height: var(--article-title-line-height);
+  margin: 0 0 var(--article-title-margin-bottom);
+  letter-spacing: var(--article-title-tracking);
+  color: hsl(var(--foreground));
+}
+
+@media (min-width: 641px) {
+  .article-title { font-size: var(--article-title-size-sm-up); }
+}
+@media (min-width: 769px) {
+  .article-title { font-size: var(--article-title-size-lg-up); }
+}
+
+.article-dek {
+  font-family: var(--article-font-family-body);
+  font-size: var(--article-dek-size);
+  line-height: var(--article-dek-line-height);
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ARTICLE PROSE
+═══════════════════════════════════════════════════════════ */
+
+.article-prose {
+  font-family: var(--article-font-family-body);
+  color: hsl(var(--foreground) / 0.9);
+  font-size: var(--article-body-size);
+  line-height: var(--article-body-line-height);
+  font-weight: 400;
+}
+
+@media (min-width: 769px) {
+  .article-prose {
+    font-size: var(--article-body-size-desktop);
+    line-height: var(--article-body-line-height-desktop);
+  }
+}
+
+/* ── Paragraphs ─────────────────────────────────────────── */
+
+.article-prose p {
+  margin: 0;
+  text-indent: 0;
+  font-weight: 400;
+  color: hsl(var(--foreground) / 0.88);
+}
+.article-prose p + p {
+  margin-top: var(--article-paragraph-gap);
+}
+.dark .article-prose p {
+  color: hsl(var(--foreground) / 0.88);
+}
+@media (min-width: 769px) {
+  .article-prose p + p {
+    margin-top: var(--article-paragraph-gap-desktop);
+  }
+}
+
+/* ── Shared scroll offset — tracks nav visibility via --toc-top ── */
+
+.article-prose h2,
+.article-prose h3,
+.article-prose h4 {
+  scroll-margin-top: calc(var(--toc-top, 5.5rem) + 0.5rem);
+}
+
+/* ── H2 — JetBrains style: bold, generous top spacing ── */
+
+.article-prose h2 {
+  font-family: var(--article-font-family-body);
+  font-size: var(--article-h2-size);
+  font-weight: 600;
+  line-height: var(--article-h2-line-height);
+  letter-spacing: -0.015em;
+  color: hsl(var(--foreground));
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 641px) {
+  .article-prose h2 {
+    font-size: var(--article-h2-size-sm-up);
+    margin-top: 3.5rem;
+    margin-bottom: 1.125rem;
+  }
+}
+
+.article-prose h2::before {
+  content: none;
+}
+
+/* ── H3 ─────────────────────────────────────────────────── */
+
+.article-prose h3 {
+  font-family: var(--article-font-family-body);
+  font-size: var(--article-h3-size);
+  line-height: var(--article-h3-line-height);
+  font-weight: 530;
+  letter-spacing: -0.012em;
+  color: hsl(var(--foreground));
+  margin-top: 2.25rem;
+  margin-bottom: 0.625rem;
+}
+
+/* ── H4 ─────────────────────────────────────────────────── */
+
+.article-prose h4 {
+  font-family: var(--article-font-family-body);
+  font-size: var(--article-h4-size);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Inline code ────────────────────────────────────────── */
+
+.article-prose :where(code):not(:where(pre code))::before,
+.article-prose :where(code):not(:where(pre code))::after {
+  content: "" !important;
+}
+
+.article-prose :where(code):not(:where(pre code)) {
+  background-color: hsl(var(--muted));
+  color: hsl(220 60% 45%);
+  padding: 0.18em 0.5em;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.35rem;
+  font-size: 0.875em;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 500;
+}
+.dark .article-prose :where(code):not(:where(pre code)) {
+  background-color: hsl(220 18% 16%);
+  color: hsl(195 80% 70%);
+  border-color: hsl(220 20% 25%);
+}
+
+/* ── Lists ──────────────────────────────────────────────── */
+
+.article-prose ul,
+.article-prose ol {
+  margin-top: 0.875rem;
+  margin-bottom: 1.375rem;
+  padding-left: 1.5rem;
+}
+.article-prose li {
+  margin-bottom: 0.45rem;
+  color: hsl(var(--foreground) / 0.88);
+  line-height: 1.75;
+}
+.article-prose li + li {
+  margin-top: 0.2rem;
+}
+.article-prose ul > li::marker {
+  color: hsl(var(--primary) / 0.6);
+}
+.article-prose ol > li::marker {
+  color: hsl(var(--muted-foreground));
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85em;
+}
+
+/* ── Blockquote ─────────────────────────────────────────── */
+
+.article-prose blockquote {
+  margin: 1.75rem 0;
+  border-left: 3px solid hsl(var(--primary));
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 0 0.625rem 0.625rem 0;
+  padding: 1rem 1.25rem;
+  color: hsl(var(--foreground) / 0.85);
+  font-style: italic;
+}
+.article-prose blockquote p:last-child { margin-bottom: 0; }
+
+/* ── Tables ─────────────────────────────────────────────── */
+
+.article-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.925rem;
+}
+.article-prose th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+  text-align: left;
+  padding: 0.6rem 0.875rem;
+  border-bottom: 2px solid hsl(var(--border));
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+}
+.article-prose td {
+  padding: 0.55rem 0.875rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+.article-prose tr:last-child td { border-bottom: none; }
+.article-prose tr:hover td { background: hsl(var(--muted) / 0.35); }
+
+/* ── Links ──────────────────────────────────────────────── */
+
+.article-prose a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  border-bottom: 1px solid hsl(var(--primary) / 0.35);
+  transition: border-color 0.15s ease;
+}
+.article-prose a:hover { border-bottom-color: hsl(var(--primary)); }
+
+/* ── Strong ─────────────────────────────────────────────── */
+
+.article-prose strong {
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+/* ── KaTeX ──────────────────────────────────────────────── */
+
+.article-prose .katex-display {
+  overflow-x: auto;
+  margin: 2rem 0;
+  background: hsl(var(--muted) / 0.4);
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.625rem;
+  padding: 1.25rem 1.75rem;
+}
+
+/* ── Images ─────────────────────────────────────────────── */
+
+.article-prose img {
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  display: block;
+}
+
+/* ── HR ─────────────────────────────────────────────────── */
+
+.article-prose hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 2.5rem 0;
+}

@@ -1,0 +1,141 @@
+/* ═══════════════════════════════════════════════════════════
+   CODE BLOCKS
+═══════════════════════════════════════════════════════════ */
+
+.code-block-wrap {
+  margin: 1.5rem 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.875rem;
+  overflow: hidden;
+  background: hsl(var(--muted) / 0.5);
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.06);
+}
+.dark .code-block-wrap {
+  background: hsl(222 20% 10%);
+  border-color: hsl(220 20% 20%);
+  box-shadow: 0 2px 8px hsl(0 0% 0% / 0.3);
+}
+
+.code-block-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.8);
+  min-height: 36px;
+}
+.dark .code-block-toolbar {
+  background: hsl(222 20% 13%);
+  border-bottom-color: hsl(220 20% 20%);
+}
+
+.code-block-left {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.code-block-lang {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+  border: 1px solid hsl(var(--primary) / 0.2);
+  padding: 0.15em 0.55em;
+  border-radius: 0.3rem;
+}
+
+.code-block-lines {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+.code-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+  border-radius: 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.35rem 0.6rem;
+  font-family: "JetBrains Mono", monospace;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.code-copy-btn:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.05);
+}
+.code-copy-btn.copied {
+  color: hsl(140 55% 35%);
+  border-color: hsl(140 55% 45% / 0.5);
+  background: hsl(140 55% 45% / 0.08);
+}
+.dark .code-copy-btn {
+  background: hsl(222 20% 16%);
+  border-color: hsl(220 20% 25%);
+}
+
+.article-prose .code-block-wrap pre {
+  margin: 0;
+  padding: 1.1rem 1.25rem 1.2rem;
+  border: none;
+  border-radius: 0;
+  overflow-x: auto;
+  background: transparent !important;
+}
+.article-prose .code-block-wrap pre code {
+  display: block;
+  min-width: max-content;
+  font-size: 0.885rem;
+  line-height: 1.78;
+  font-family: "JetBrains Mono", monospace;
+  tab-size: 2;
+}
+.dark .article-prose .code-block-wrap pre code {
+  color: hsl(210 30% 93%);
+}
+
+/* ── Shiki dual-theme (defaultColor: false in astro.config.mjs) ──────────
+   Astro outputs .astro-code with CSS vars --shiki-light / --shiki-dark.
+   We apply each var in the appropriate colour-scheme context.
+   The wrapper bg comes from .code-block-wrap, not Shiki.
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* Light mode — use --shiki-light token colours */
+.article-prose .astro-code,
+.article-prose .astro-code span {
+  color:            var(--shiki-light) !important;
+  background-color: transparent       !important;
+  font-style:       var(--shiki-light-font-style);
+  font-weight:      var(--shiki-light-font-weight);
+  text-decoration:  var(--shiki-light-text-decoration);
+}
+
+/* Dark mode — switch to --shiki-dark token colours */
+.dark .article-prose .astro-code,
+.dark .article-prose .astro-code span {
+  color:            var(--shiki-dark) !important;
+  background-color: transparent       !important;
+  font-style:       var(--shiki-dark-font-style);
+  font-weight:      var(--shiki-dark-font-weight);
+  text-decoration:  var(--shiki-dark-text-decoration);
+}
+
+/* Scrollbar in code */
+.article-prose .code-block-wrap pre::-webkit-scrollbar { height: 4px; }
+.article-prose .code-block-wrap pre::-webkit-scrollbar-track { background: transparent; }
+.article-prose .code-block-wrap pre::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 99px;
+}

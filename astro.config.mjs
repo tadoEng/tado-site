@@ -33,8 +33,16 @@ export default defineConfig({
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],
     shikiConfig: {
-      themes: { light: "one-light", dark: "one-dark-pro" },
-      wrap: true,
+      themes: {
+        light: "github-light",
+        dark:  "one-dark-pro",
+      },
+      // Wrap long lines instead of horizontal scroll inside Shiki itself.
+      // Our .code-block-wrap handles overflow, so keep this false.
+      wrap: false,
+      // Strip Shiki's inline background so our .code-block-wrap bg wins.
+      defaultColor: false,
+
     },
   },
 });
