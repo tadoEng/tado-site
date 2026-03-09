@@ -1,5 +1,4 @@
 ---
-// src/pages/projects/index.astro
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { Badge } from "@/components/starwind/badge";
 import { Separator } from "@/components/starwind/separator";
@@ -8,16 +7,16 @@ import { getCollection } from "astro:content";
 const projects = await getCollection("projects");
 const sorted = projects.sort((a, b) => a.data.order - b.data.order);
 
-const statusVariant = {
+const statusVariant: Record<string, "success" | "warning" | "secondary"> = {
   live:     "success",
   wip:      "warning",
   archived: "secondary",
-} as const;
+};
 ---
 
 <BaseLayout
   title="Projects"
-  description="Open-source tools and engineering applications I've built — from ETABS wrappers to browser-based structural calculators."
+  description="Open-source tools and engineering applications I've built."
 >
   <div class="mx-auto max-w-layout px-6 py-16">
 
@@ -36,8 +35,7 @@ const statusVariant = {
         <a
           href={`/projects/${project.id}`}
           class="group grid grid-cols-[3rem_1fr_auto] items-start gap-4
-                 py-5 border-transparent transition-all hover:bg-card
-                 hover:px-3 hover:rounded-lg no-underline"
+                 py-5 transition-all hover:bg-card hover:px-3 hover:rounded-lg no-underline"
         >
           <span class="font-mono text-xs text-muted-foreground pt-1 select-none">
             {String(i + 1).padStart(2, "0")}
@@ -52,11 +50,9 @@ const statusVariant = {
                 {project.data.status}
               </Badge>
             </div>
-
             <p class="text-sm text-muted-foreground">{project.data.description}</p>
-
             <div class="flex flex-wrap gap-1 mt-1">
-              {project.data.stack.map((tech) => (
+              {project.data.stack.map((tech: string) => (
                 <Badge variant="outline" class="text-[10px] px-1.5 py-0 font-mono">
                   {tech}
                 </Badge>

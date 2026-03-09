@@ -1,5 +1,4 @@
 ---
-// src/pages/projects/[id].astro
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { Badge } from "@/components/starwind/badge";
 import { Button } from "@/components/starwind/button";
@@ -26,14 +25,12 @@ const statusVariant = {
 ---
 
 <BaseLayout title={title} description={description}>
-  <div class="mx-auto max-w-prose px-4 py-16">
+  <div class="mx-auto max-w-article px-6 py-16">
 
-    <!-- Back -->
     <Button href="/projects" variant="ghost" size="sm" class="mb-8 -ml-2">
       ← All projects
     </Button>
 
-    <!-- Header -->
     <header class="mb-8">
       <div class="flex flex-wrap items-center gap-3 mb-3">
         <h1 class="text-3xl font-black tracking-tight">{title}</h1>
@@ -41,25 +38,19 @@ const statusVariant = {
       </div>
       <p class="text-muted-foreground text-lg leading-relaxed">{description}</p>
 
-      <!-- Stack -->
       <div class="flex flex-wrap gap-1.5 mt-4">
         {stack.map((tech) => (
           <Badge variant="secondary" class="font-mono text-xs">{tech}</Badge>
         ))}
       </div>
 
-      <!-- Links -->
       {(liveUrl || githubUrl) && (
         <div class="flex flex-wrap gap-2 mt-5">
           {liveUrl && (
-            <Button href={liveUrl} target="_blank" rel="noopener" size="sm">
-              Live demo ↗
-            </Button>
+            <Button href={liveUrl} target="_blank" rel="noopener" size="sm">Live demo ↗</Button>
           )}
           {githubUrl && (
-            <Button href={githubUrl} variant="outline" target="_blank" rel="noopener" size="sm">
-              GitHub ↗
-            </Button>
+            <Button href={githubUrl} variant="outline" target="_blank" rel="noopener" size="sm">GitHub ↗</Button>
           )}
         </div>
       )}
@@ -67,8 +58,9 @@ const statusVariant = {
 
     <Separator class="mb-8" />
 
-    <!-- MDX content -->
-    <div class="prose prose-neutral dark:prose-invert max-w-none">
+    <div class="prose prose-neutral dark:prose-invert max-w-none
+                prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-0
+                prose-a:text-primary">
       <Content />
     </div>
 

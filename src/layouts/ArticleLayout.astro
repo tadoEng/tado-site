@@ -1,10 +1,6 @@
 ---
-// src/layouts/ArticleLayout.astro
-// ─────────────────────────────────────────────────────────────
-// Wraps every blog post. Prose width, reading progress bar,
-// article header, and prev/next navigation.
-// ─────────────────────────────────────────────────────────────
 import BaseLayout from "./BaseLayout.astro";
+import TableOfContents from "@components/ui/TableOfContents.astro";
 import { Badge } from "@/components/starwind/badge";
 import { Button } from "@/components/starwind/button";
 import { Separator } from "@/components/starwind/separator";
@@ -12,101 +8,101 @@ import type { CollectionEntry } from "astro:content";
 
 interface Props {
   post: CollectionEntry<"writing">;
+  headings?: { depth: number; slug: string; text: string }[];
   prevPost?: { id: string; data: { title: string } };
   nextPost?: { id: string; data: { title: string } };
 }
 
-const { post, prevPost, nextPost } = Astro.props;
+const { post, headings = [], prevPost, nextPost } = Astro.props;
 const { title, description, publishDate, lane, tags, readingTime } = post.data;
 
-// Format date for display
 const formattedDate = new Date(publishDate).toLocaleDateString("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
 });
 
-// Lane → Starwind Badge variant mapping
 const laneVariant = {
-  structural: "warning",   // amber-ish
-  dev: "info",             // blue-ish
-  tool: "success",         // green-ish
+  structural: "warning",
+  dev: "info",
+  tool: "success",
   workflow: "secondary",
 } as const;
+
+const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1;
 ---
 
-<BaseLayout
-  title={title}
-  description={description}
-  ogType="article"
->
-  <!-- Reading progress bar (thin line, top of viewport) -->
+<BaseLayout title={title} description={description} ogType="article">
   <div id="reading-progress"></div>
 
-  <article class="mx-auto max-w-prose px-4 py-16">
-    <!-- ── Article header ──────────────────────────────── -->
-    <header class="mb-8">
-      <!-- Lane + tags row -->
-      <div class="mb-3 flex flex-wrap items-center gap-2">
-        <Badge variant={laneVariant[lane]}>
-          {lane.charAt(0).toUpperCase() + lane.slice(1)}
-        </Badge>
-        {tags.map((tag) => (
-          <Badge variant="outline" class="text-xs">
-            {tag}
-          </Badge>
-        ))}
-      </div>
+  <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-[1100px]" : "max-w-article"}`}>
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-12 items-start" : ""}>
 
-      <!-- Title -->
-      <h1 class="mb-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
-        {title}
-      </h1>
+      <article>
+        <Button href="/writing" variant="ghost" size="sm" class="mb-8 -ml-2">
+          ← All posts
+        </Button>
 
-      <!-- Meta: date + read time -->
-      <div class="flex items-center gap-3 text-sm text-muted-foreground font-mono">
-        <time datetime={publishDate.toISOString()}>{formattedDate}</time>
-        {readingTime && (
-          <>
-            <span aria-hidden="true">·</span>
-            <span>{readingTime} min read</span>
-          </>
-        )}
-      </div>
-    </header>
+        <header class="mb-8">
+          <div class="mb-3 flex flex-wrap items-center gap-2">
+            <Badge variant={laneVariant[lane]}>
+              {lane.charAt(0).toUpperCase() + lane.slice(1)}
+            </Badge>
+            {tags.map((tag) => (
+              <Badge variant="outline" class="text-xs">{tag}</Badge>
+            ))}
+          </div>
 
-    <Separator class="mb-8" />
+          <h1 class="mb-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+            {title}
+          </h1>
 
-    <!-- ── MDX content ─────────────────────────────────── -->
-    <!-- `prose` class comes from @tailwindcss/typography -->
-    <div class="prose prose-neutral dark:prose-invert max-w-none">
-      <slot />
+          <div class="flex items-center gap-3 text-sm text-muted-foreground font-mono">
+            <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+            {readingTime && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{readingTime} min read</span>
+              </>
+            )}
+          </div>
+        </header>
+
+        <Separator class="mb-8" />
+
+        <div class="prose prose-neutral dark:prose-invert max-w-none
+                    prose-headings:font-bold prose-headings:tracking-tight
+                    prose-code:font-mono prose-code:text-[0.92em]
+                    prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+          <slot />
+        </div>
+
+        <Separator class="mt-12 mb-8" />
+
+        <nav aria-label="Article navigation" class="flex items-center justify-between gap-4">
+          {prevPost ? (
+            <Button variant="outline" href={`/writing/${prevPost.id}`} size="sm" class="max-w-[45%] truncate">
+              ← {prevPost.data.title}
+            </Button>
+          ) : <div />}
+          {nextPost && (
+            <Button variant="outline" href={`/writing/${nextPost.id}`} size="sm" class="max-w-[45%] truncate">
+              {nextPost.data.title} →
+            </Button>
+          )}
+        </nav>
+      </article>
+
+      {hasToc && (
+        <aside class="hidden lg:block">
+          <TableOfContents headings={headings} />
+        </aside>
+      )}
+
     </div>
-
-    <Separator class="mt-12 mb-8" />
-
-    <!-- ── Prev / Next navigation ──────────────────────── -->
-    <nav
-      aria-label="Article navigation"
-      class="flex items-center justify-between gap-4"
-    >
-      {prevPost ? (
-        <Button variant="outline" href={`/writing/${prevPost.id}`} size="sm">
-          ← {prevPost.data.title}
-        </Button>
-      ) : (
-        <div />
-      )}
-      {nextPost && (
-        <Button variant="outline" href={`/writing/${nextPost.id}`} size="sm">
-          {nextPost.data.title} →
-        </Button>
-      )}
-    </nav>
-  </article>
+  </div>
 </BaseLayout>
 
-<!-- Reading progress bar script -->
 <script>
   const bar = document.getElementById("reading-progress");
   if (bar) {

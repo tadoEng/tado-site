@@ -1,1 +1,122 @@
+@import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "katex/dist/katex.min.css";
 @import "tailwindcss";
+
+@theme {
+  --max-width-layout: 1280px;
+  --max-width-article: 760px;
+  --max-width-about: 900px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+main { flex: 1; }
+
+.stress-bar {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #2a4d9e 0%, #3a9ebf 18%, #4abf7a 36%,
+    #d4a847 55%, #e07040 75%, #c0634a 100%
+  );
+  opacity: 0.7;
+}
+
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  z-index: 200;
+  transition: width 0.1s linear;
+  background-color: hsl(var(--primary));
+}
+
+.prose :where(code):not(:where(pre code))::before,
+.prose :where(code):not(:where(pre code))::after {
+  content: "" !important;
+}
+
+.prose :where(code):not(:where(pre code)) {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 0.15em 0.45em;
+  border-radius: 0.3rem;
+  font-size: 0.875em;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.prose pre {
+  margin: 1.25rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  background: hsl(var(--muted) / 0.72);
+}
+
+.prose pre code {
+  display: block;
+  min-width: max-content;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.prose pre.astro-code,
+.prose pre.shiki {
+  background-color: hsl(var(--muted) / 0.72) !important;
+}
+
+.dark .prose pre.astro-code,
+.dark .prose pre.shiki {
+  background-color: hsl(220 16% 14%) !important;
+  border-color: hsl(var(--border) / 0.7);
+}
+
+.shiki.github-dark  { display: none; }
+.dark .shiki.github-light { display: none; }
+.dark .shiki.github-dark  { display: block; }
+
+.prose {
+  color: hsl(var(--foreground) / 0.92);
+  font-size: 1.04rem;
+}
+
+.prose p,
+.prose li {
+  line-height: 1.86;
+}
+
+.prose p + p {
+  margin-top: 0.9rem;
+}
+
+.prose h2, .prose h3, .prose h4 { scroll-margin-top: 5rem; }
+
+.prose .katex-display {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  background: hsl(var(--muted) / 0.4);
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.toc-link { transition: color 0.15s, padding-left 0.15s; }
+.toc-link.active {
+  color: hsl(var(--primary));
+  padding-left: 0.5rem;
+  border-left: 2px solid hsl(var(--primary));
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
