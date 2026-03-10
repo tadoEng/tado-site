@@ -22,6 +22,9 @@ const writing = defineCollection({
     draft:       z.boolean().default(false),
     readingTime: z.number().optional(),  // minutes — fill in manually or via remark plugin
 
+    // Optional image shown in writing cards (panel/thumbnail on /writing and homepage)
+    cardImage: z.string().optional(),
+
     // Optional hero / OG image override
     ogImage: z.string().optional(),
   }),

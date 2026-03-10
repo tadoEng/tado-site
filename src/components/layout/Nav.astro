@@ -34,11 +34,11 @@ function isActive(href: string) {
     <!-- ── Logo ──────────────────────────────────────────── -->
     <a
       href="/"
-      class="flex items-center gap-1.5 font-bold text-sm tracking-tight"
+      class="flex items-center gap-1.5 font-bold text-base md:text-lg tracking-tight leading-none"
       aria-label="Home"
     >
-      <span class="text-primary" aria-hidden="true">✦</span>
-      <span>Tado</span>
+      <!-- <span class="text-primary" aria-hidden="true">✦</span> -->
+      <span>Thanh Tu Do</span>
     </a>
 
     <!-- ── Desktop nav ───────────────────────────────────── -->
@@ -69,13 +69,14 @@ function isActive(href: string) {
           </Button>
         </SheetTrigger>
 
-        <SheetContent side="right" class="w-64">
-          <nav class="flex flex-col gap-1 mt-6" aria-label="Mobile navigation">
+        <SheetContent side="right" class="w-72 max-w-[85vw]">
+          <nav class="mt-8 flex flex-col gap-2 pr-2" aria-label="Mobile navigation">
             {navLinks.map(({ href, label }) => (
               <Button
                 href={href}
                 variant={isActive(href) ? "secondary" : "ghost"}
-                class="justify-start"
+                size="sm"
+                class="w-full min-h-10 justify-start px-3 text-foreground hover:text-foreground"
               >
                 {label}
               </Button>

@@ -23,6 +23,15 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.7.0
         version: 3.7.0
+      '@ifc-lite/geometry':
+        specifier: ^1.14.3
+        version: 1.14.3
+      '@ifc-lite/parser':
+        specifier: ^2.0.0
+        version: 2.0.0
+      '@ifc-lite/renderer':
+        specifier: ^1.14.3
+        version: 1.14.3
       '@tabler/icons':
         specifier: ^3
         version: 3.40.0
@@ -781,6 +790,30 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@ifc-lite/data@1.14.3':
+    resolution: {integrity: sha512-d6U0llen0dawoVTEyVfhSSgNa1srx8vIsvDbw7m9o07ke2ylxuS9fdw7Gf0mJPHn4W3JgsTHgtD+SaNEi4HKJg==}
+
+  '@ifc-lite/geometry@1.14.3':
+    resolution: {integrity: sha512-Msq9PLC1HyW77banqX2yVTTkNWrM2GXtY2KnT+pUQpRbdnlIDFZBRk52Uos3HdZ8n9XDkdR5+Pe0euNB1cE0Kg==}
+
+  '@ifc-lite/ifcx@2.0.0':
+    resolution: {integrity: sha512-aSfU8IMPw32299gICd4Dl5pa4Ulo92bruIVMDudixz9plrT1+fyVJ4S0ya4ZJSesubbjAYEn+iEQjr0hrTVOHg==}
+
+  '@ifc-lite/mutations@1.14.3':
+    resolution: {integrity: sha512-smGdHyl3kkQhKTAQzjfrar1bteIaKo72iVArtZh+5c/qdbwvCoY4dkZBZPooagetrpit57tX/aBTmuRr1ttezQ==}
+
+  '@ifc-lite/parser@2.0.0':
+    resolution: {integrity: sha512-5iqEjUxb/c/kVlzuLq6Oia7ErsgsqBTpAcdQnnmAANPDmRt1TLoNF1wZlU400fv6+t02Ji79fEsWDkJne70TxA==}
+
+  '@ifc-lite/renderer@1.14.3':
+    resolution: {integrity: sha512-8uan9UsXKOThMr+vj4hzG64fx/0THKIRhqoUh1DfTasZRF6p8IL1bG9FH4tzaMgu5TvACYTWiLRweUy8hzL6kQ==}
+
+  '@ifc-lite/spatial@1.14.3':
+    resolution: {integrity: sha512-VBkZUxe59auWQ4nN2P8fngvUhZLRsS6wso6epxauqRo3/rwaEnCxXtHqdlGZulD2Bg2AnQz6Aww9YaqUxFbiOQ==}
+
+  '@ifc-lite/wasm@1.14.3':
+    resolution: {integrity: sha512-So3jRx+SDlBfE43XFuanc73HJNISzq+zw/gAef3CIcnYfZrofkb/moPzuDkwdvS1hPK46wAJYStmgtWwCi7/Vw==}
+
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
     engines: {node: '>=18'}
@@ -1354,6 +1387,9 @@ packages:
     resolution: {integrity: sha512-TBf2sJjYeb28jD2U/OhwdW0bbOsxkWPwQ7SrqGf9sVcoYwZj7rkXljroBO9wKBut9XnmQLXanuDUeqQK0lGg/w==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
+
+  '@tauri-apps/api@2.10.1':
+    resolution: {integrity: sha512-hKL/jWf293UDSUN09rR69hrToyIXBb8CjGaWC7gfinvnQrBVvnLr08FeFi38gxtugAVyVcTa5/FD/Xnkb1siBw==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -3442,6 +3478,41 @@ snapshots:
   '@esbuild/win32-x64@0.27.3':
     optional: true
 
+  '@ifc-lite/data@1.14.3': {}
+
+  '@ifc-lite/geometry@1.14.3':
+    dependencies:
+      '@ifc-lite/data': 1.14.3
+      '@ifc-lite/wasm': 1.14.3
+    optionalDependencies:
+      '@tauri-apps/api': 2.10.1
+
+  '@ifc-lite/ifcx@2.0.0':
+    dependencies:
+      '@ifc-lite/data': 1.14.3
+      '@ifc-lite/mutations': 1.14.3
+
+  '@ifc-lite/mutations@1.14.3':
+    dependencies:
+      '@ifc-lite/data': 1.14.3
+
+  '@ifc-lite/parser@2.0.0':
+    dependencies:
+      '@ifc-lite/data': 1.14.3
+      '@ifc-lite/ifcx': 2.0.0
+
+  '@ifc-lite/renderer@1.14.3':
+    dependencies:
+      '@ifc-lite/geometry': 1.14.3
+      '@ifc-lite/spatial': 1.14.3
+      '@ifc-lite/wasm': 1.14.3
+
+  '@ifc-lite/spatial@1.14.3':
+    dependencies:
+      '@ifc-lite/geometry': 1.14.3
+
+  '@ifc-lite/wasm@1.14.3': {}
+
   '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.33.5':
@@ -3900,6 +3971,9 @@ snapshots:
       '@tailwindcss/oxide': 4.2.1
       tailwindcss: 4.2.1
       vite: 6.4.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)
+
+  '@tauri-apps/api@2.10.1':
+    optional: true
 
   '@types/babel__core@7.20.5':
     dependencies:

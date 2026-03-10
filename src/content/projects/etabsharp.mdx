@@ -9,47 +9,78 @@ githubUrl: "https://github.com/tadoEng/EtabSharp"
 
 ## Problem
 
-The ETABS COM API is powerful but painful to use directly. Methods accept `ref` arrays
-that the API populates, return integer codes instead of throwing exceptions, and provide
-no IntelliSense guidance. Every automation script requires the same verbose boilerplate.
+The ETABS COM API is powerful, but direct usage is slow and error-prone.
+Most calls rely on `ref` arrays, return integer status codes (`ret != 0`) instead of
+exceptions, and expose stringly typed arguments with minimal guidance.
+
+In practice, that means every script repeats the same COM-era boilerplate before
+you can do any real engineering work.
 
 ## Approach
 
 ETABSharp wraps the raw COM API with:
 
-- **Strong typing** — all outputs are typed records, not `ref` arrays
-- **Fluent access** — navigate the API as `etabs.Results.StoryDrifts()` rather than
-  assembling parameter arrays
-- **Proper error handling** — exceptions with meaningful messages instead of `ret != 0`
-- **Async support** — long-running operations (run analysis, get large result tables)
-  are awaitable
+- **Strong typing** - outputs are typed records, not `ref` arrays
+- **Fluent access** - navigate ETABS operations without hand-assembling parameter arrays
+- **Better errors** - meaningful exceptions instead of checking `ret != 0` everywhere
+- **Helper methods** - common workflows reduced to concise calls
 
-The wrapper is deliberately thin — it maps 1:1 to ETABS API calls. No magic,
-no hidden abstraction. What ETABS does, ETABSSharp can do.
+```csharp
+var displacements = etabs.Model.AnalysisResults.GetJointDispl("",eItemTypeElm.Objects);
+```
+
+The wrapper is intentionally thin: methods map closely to ETABS API behavior.
+No hidden abstraction layer, no black-box magic. If ETABS can do it, ETABSharp
+can expose it cleanly.
+
+## Design principles
+
+### 1. Thin wrapper, not a replacement
+
+ETABSharp does not try to hide ETABS. It provides safer, cleaner access to the
+same capabilities.
+
+### 2. Typed results over `ref` plumbing
+
+Structured models replace raw out-parameter arrays, improving readability,
+discoverability, and downstream processing.
+
+### 3. Practical developer ergonomics
+
+The goal is to reduce repetitive setup code so scripts can focus on model logic,
+result extraction, and engineering decisions.
 
 ## The AI / MCP layer
 
-On top of the C# wrapper sits an **MCP (Model Context Protocol) server** that exposes
-ETABS as a set of tools for AI assistants.
+On top of the C# wrapper is an **MCP (Model Context Protocol) server** that exposes
+ETABS operations as tools for AI assistants.
 
-With ETABSSharp MCP configured in Claude Desktop or VS Code Copilot, you can:
+With ETABSharp MCP configured (for example in Claude Desktop or VS Code Copilot),
+you can:
 
-- Query drift results in natural language: *"Which stories exceed the 0.5% drift limit in EQ-X?"*
-- Modify the model: *"Add a 200×200×10 HSS column to gridline C between levels 3 and 4"*
-- Run design checks: *"Check all beams in the roof level for deflection under SLS loads"*
+- Query results in natural language:
+  *"What is the dead-load base reaction of this model?"*
+- Modify the model with intent-based commands:
+  *"Add a 400x400 C30 rectangular column section."*
+- Trigger design workflows:
+  *"Check roof-level beams for DCR under ULS load combinations."*
 
-The AI interprets the request, calls the appropriate ETABSSharp tool, and reasons
-over the structured results.
+The assistant interprets the request, calls the appropriate ETABSharp tool, and
+reasons over structured outputs returned from ETABS.
 
 ## Status
 
-ETABSharp is actively maintained and used in production structural work.
-The core API wrapper is stable. The MCP server is under development.
+ETABSharp is actively maintained and used in production structural automation work.
+
+- Core wrapper: stable and expanding
+- MCP layer: active development and testing
 
 ## Get it
 
-Install from NuGet:
+- GitHub: [github.com/tadoEng/EtabSharp](https://github.com/tadoEng/EtabSharp)
+- Doc: [deepwiki.com/tadodev/EtabSharp](https://deepwiki.com/tadodev/EtabSharp)
+- NuGet:
 
 ```bash
-dotnet add package ETABSharp
+dotnet add package EtabSharp --version 0.3.1-beta
 ```

@@ -2,22 +2,12 @@
 // src/pages/writing/index.astro
 import BaseLayout from "@layouts/BaseLayout.astro";
 import PostCard from "@components/ui/PostCard.astro";
-import { Button } from "@/components/starwind/button";
 import { getCollection } from "astro:content";
 
 const allPosts = await getCollection("writing", (p) => !p.data.draft);
 const sorted = allPosts.sort(
   (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
 );
-
-// Lane filter from URL param
-const url = new URL(Astro.request.url);
-const activeLane = url.searchParams.get("lane") ?? "all";
-
-const filtered =
-  activeLane === "all"
-    ? sorted
-    : sorted.filter((p) => p.data.lane === activeLane);
 
 const lanes = [
   { id: "all",        label: "All"        },
@@ -42,29 +32,107 @@ const lanes = [
     </div>
 
     <!-- Filter tabs -->
-    <nav class="flex flex-wrap gap-2 mb-10" aria-label="Filter posts by lane">
+    <nav id="writing-lane-filter" class="flex flex-wrap gap-2 mb-10" aria-label="Filter posts by lane">
       {lanes.map(({ id, label }) => (
-        <Button
+        <a
           href={id === "all" ? "/writing" : `/writing?lane=${id}`}
-          variant={activeLane === id ? "default" : "outline"}
-          size="sm"
+          data-lane-id={id}
+          data-active={id === "all" ? "true" : "false"}
+          class="inline-flex h-9 items-center justify-center rounded-md border px-4 text-sm font-medium whitespace-nowrap transition-colors
+                 data-[active=true]:border-transparent data-[active=true]:bg-foreground data-[active=true]:text-background
+                 data-[active=false]:bg-background data-[active=false]:text-foreground hover:bg-muted"
         >
           {label}
-        </Button>
+        </a>
       ))}
     </nav>
 
     <!-- Post grid -->
-    {filtered.length > 0 ? (
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filtered.map((post) => (
+    <div id="writing-post-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {sorted.map((post) => (
+        <div data-post-lane={post.data.lane}>
           <PostCard post={post} />
-        ))}
-      </div>
-    ) : (
-      <p class="text-muted-foreground text-center py-20">
-        No posts in this lane yet — check back soon.
-      </p>
-    )}
+        </div>
+      ))}
+    </div>
+    <p id="writing-empty" class="hidden text-muted-foreground text-center py-20">
+      No posts in this lane yet — check back soon.
+    </p>
   </div>
 </BaseLayout>
+
+<script>
+  (() => {
+    const validLanes = ["all", "structural", "dev", "tool", "workflow"];
+    const laneSet = new Set(validLanes);
+
+    const laneLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("[data-lane-id]")
+    );
+    const postCards = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-post-lane]")
+    );
+    const emptyState = document.getElementById("writing-empty");
+
+    if (!laneLinks.length || !postCards.length) return;
+
+    const normalizeLane = (raw: string | null): string =>
+      raw && laneSet.has(raw) ? raw : "all";
+
+    function readLaneFromUrl(): string {
+      const url = new URL(window.location.href);
+      return normalizeLane(url.searchParams.get("lane"));
+    }
+
+    function writeLaneToUrl(lane: string) {
+      const url = new URL(window.location.href);
+      if (lane === "all") {
+        url.searchParams.delete("lane");
+      } else {
+        url.searchParams.set("lane", lane);
+      }
+      history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+
+    function setActiveLane(lane: string, syncUrl: boolean) {
+      const normalized = normalizeLane(lane);
+      let visibleCount = 0;
+
+      laneLinks.forEach((link) => {
+        const isActive = link.dataset.laneId === normalized;
+        link.dataset.active = isActive ? "true" : "false";
+        if (isActive) {
+          link.setAttribute("aria-current", "page");
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      });
+
+      postCards.forEach((card) => {
+        const matches =
+          normalized === "all" || card.dataset.postLane === normalized;
+        card.hidden = !matches;
+        if (matches) visibleCount++;
+      });
+
+      if (emptyState) {
+        emptyState.classList.toggle("hidden", visibleCount > 0);
+      }
+
+      if (syncUrl) writeLaneToUrl(normalized);
+    }
+
+    laneLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveLane(link.dataset.laneId ?? "all", true);
+      });
+    });
+
+    window.addEventListener("popstate", () => {
+      setActiveLane(readLaneFromUrl(), false);
+    });
+
+    setActiveLane(readLaneFromUrl(), false);
+  })();
+</script>

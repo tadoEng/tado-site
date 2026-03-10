@@ -1,237 +1,481 @@
-// src/components/home/HeroVisual.tsx
-// ─────────────────────────────────────────────────────────────
-// Animated structural frame SVG — React island (client:load)
-// Adapts colours to light/dark via CSS custom properties.
-// ─────────────────────────────────────────────────────────────
+import { useEffect, useRef } from "react";
+
+type Segment = {
+  t: number;
+  y: number;
+  w: number;
+  d: number;
+  skew: number;
+  cx: number;
+};
+
+type ThemeName = "light" | "dark";
+
+type Palette = {
+  glow: string;
+  shadowInner: string;
+  shadowOuter: string;
+  ghost: string;
+  frontLeft: string;
+  frontMid: string;
+  frontRight: string;
+  sideFace: (t: number) => string;
+  sideEdge: (t: number) => string;
+  column: string;
+  columnRear: string;
+  windStart: string;
+  windEnd: string;
+  windHead: (alpha: number) => string;
+  profileLine: string;
+  profileFillA: string;
+  profileFillB: string;
+  baseline: string;
+  caption: string;
+};
+
+const FLOOR_COUNT = 52;
+const SPIRE_SEGS = 8;
+const CANVAS_W = 700;
+const CANVAS_H = 560;
+const PERIOD = 5.8;
+
+const PALETTES: Record<ThemeName, Palette> = {
+  dark: {
+    glow: "rgba(40, 100, 255, 0.16)",
+    shadowInner: "rgba(10, 30, 90, 0.58)",
+    shadowOuter: "rgba(0, 0, 0, 0)",
+    ghost: "rgba(150, 185, 255, 0.36)",
+    frontLeft: "rgba(18, 32, 80, 0.90)",
+    frontMid: "rgba(34, 63, 148, 0.78)",
+    frontRight: "rgba(18, 32, 80, 0.90)",
+    sideFace: (t) => `rgba(${12 + t * 12}, ${20 + t * 14}, ${54 + t * 22}, 0.92)`,
+    sideEdge: (t) => `rgba(80, 128, 230, ${0.10 + t * 0.08})`,
+    column: "rgba(170, 198, 255, 0.30)",
+    columnRear: "rgba(130, 160, 235, 0.20)",
+    windStart: "rgba(64, 120, 255, 0.00)",
+    windEnd: "rgba(120, 186, 255, 0.92)",
+    windHead: (alpha) => `rgba(120, 186, 255, ${alpha})`,
+    profileLine: "rgba(251, 146, 60, 0.92)",
+    profileFillA: "rgba(251, 146, 60, 0.02)",
+    profileFillB: "rgba(239, 68, 68, 0.26)",
+    baseline: "rgba(132, 168, 255, 0.28)",
+    caption: "rgba(178, 208, 255, 0.80)",
+  },
+  light: {
+    glow: "rgba(38, 98, 255, 0.11)",
+    shadowInner: "rgba(54, 93, 172, 0.25)",
+    shadowOuter: "rgba(84, 114, 172, 0)",
+    ghost: "rgba(42, 80, 158, 0.28)",
+    frontLeft: "rgba(220, 232, 253, 0.92)",
+    frontMid: "rgba(191, 213, 249, 0.92)",
+    frontRight: "rgba(220, 232, 253, 0.92)",
+    sideFace: (t) => `rgba(${176 - t * 24}, ${198 - t * 24}, ${236 - t * 20}, 0.95)`,
+    sideEdge: (t) => `rgba(62, 104, 196, ${0.24 + t * 0.12})`,
+    column: "rgba(34, 77, 173, 0.34)",
+    columnRear: "rgba(60, 102, 186, 0.26)",
+    windStart: "rgba(54, 114, 233, 0.00)",
+    windEnd: "rgba(49, 112, 240, 0.78)",
+    windHead: (alpha) => `rgba(49, 112, 240, ${Math.min(alpha, 0.8)})`,
+    profileLine: "rgba(224, 92, 41, 0.86)",
+    profileFillA: "rgba(249, 115, 22, 0.02)",
+    profileFillB: "rgba(239, 68, 68, 0.20)",
+    baseline: "rgba(51, 93, 180, 0.24)",
+    caption: "rgba(41, 75, 150, 0.72)",
+  },
+};
+
+function towerWidth(t: number): number {
+  if (t < 0.18) return 130 - t * 60;
+  if (t < 0.38) return 119 - (t - 0.18) * 80;
+  if (t < 0.56) return 103 - (t - 0.38) * 100;
+  if (t < 0.72) return 85 - (t - 0.56) * 110;
+  if (t < 0.88) return 67 - (t - 0.72) * 120;
+  return Math.max(8, 48 - (t - 0.88) * 280);
+}
+
+function towerTwist(t: number): number {
+  return t * 38;
+}
+
+function towerCx(t: number): number {
+  return Math.sin(t * Math.PI * 1.6) * 6;
+}
+
+function stressHue(t: number): string {
+  const stops: [number, number, number, number][] = [
+    [0, 200, 90, 65],
+    [0.25, 170, 88, 58],
+    [0.5, 100, 86, 52],
+    [0.72, 40, 92, 55],
+    [0.88, 20, 94, 54],
+    [1.0, 0, 92, 50],
+  ];
+
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, h0, s0, l0] = stops[i];
+    const [t1, h1, s1, l1] = stops[i + 1];
+    if (t <= t1) {
+      const f = (t - t0) / (t1 - t0);
+      return `hsl(${h0 + f * (h1 - h0)}, ${s0 + f * (s1 - s0)}%, ${l0 + f * (l1 - l0)}%)`;
+    }
+  }
+
+  return "hsl(0, 92%, 50%)";
+}
+
+function getThemeName(): ThemeName {
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+function drawFloorTop(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  y: number,
+  w: number,
+  d: number,
+  skew: number,
+  dx: number,
+  fillStyle: string,
+  strokeStyle: string,
+  lineWidth: number,
+  dash: number[] | null,
+  glow: boolean,
+): void {
+  const fl: [number, number] = [cx - w / 2 + dx, y];
+  const fr: [number, number] = [cx + w / 2 + dx, y];
+  const br: [number, number] = [cx + w / 2 + dx + skew, y - d];
+  const bl: [number, number] = [cx - w / 2 + dx + skew, y - d];
+
+  ctx.beginPath();
+  ctx.moveTo(fl[0], fl[1]);
+  ctx.lineTo(fr[0], fr[1]);
+  ctx.lineTo(br[0], br[1]);
+  ctx.lineTo(bl[0], bl[1]);
+  ctx.closePath();
+
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+
+  if (dash) ctx.setLineDash(dash);
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+
+  if (glow) {
+    ctx.shadowColor = strokeStyle;
+    ctx.shadowBlur = 5;
+  }
+
+  ctx.stroke();
+
+  if (glow) {
+    ctx.shadowBlur = 0;
+  }
+
+  if (dash) ctx.setLineDash([]);
+}
 
 export default function HeroVisual() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const BASE_CX = 320;
+    const BASE_Y = 500;
+    const FLOOR_H = 7.1;
+    const HEIGHT_PX = (FLOOR_COUNT - 1) * FLOOR_H + 72;
+    const MAX_DRIFT = HEIGHT_PX * 0.026;
+
+    const floors: Segment[] = Array.from({ length: FLOOR_COUNT }, (_, i) => {
+      const t = i / (FLOOR_COUNT - 1);
+      const y = BASE_Y - i * FLOOR_H;
+      const w = towerWidth(t);
+      const twist = towerTwist(t);
+      const d = (20 - t * 8) * Math.cos((twist * Math.PI) / 180);
+      const skew = (22 + t * 4) + Math.sin((twist * Math.PI) / 180) * 6;
+      const cx = BASE_CX + towerCx(t);
+      return { t, y, w, d, skew, cx };
+    });
+
+    const spire: Segment[] = Array.from({ length: SPIRE_SEGS }, (_, i) => {
+      const tt = i / (SPIRE_SEGS - 1);
+      const y = BASE_Y - (FLOOR_COUNT - 1) * FLOOR_H - tt * 72;
+      const w = Math.max(2, 8 - tt * 6);
+      return { t: Math.min(1 + tt * 0.18, 1), y, w, d: 6 - tt * 4, skew: 24, cx: BASE_CX };
+    });
+
+    const segments = [...floors, ...spire];
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let frame = 0;
+
+    const sway = (tNorm: number, timeSec: number): number => {
+      const modeShape = Math.pow(tNorm, 1.5);
+      const wind = Math.sin((2 * Math.PI * timeSec) / PERIOD);
+      const gust = Math.sin((2 * Math.PI * timeSec) / (PERIOD * 0.31)) * 0.18;
+      return modeShape * MAX_DRIFT * (wind + gust);
+    };
+
+    const render = (timeSec: number): void => {
+      const palette = PALETTES[getThemeName()];
+
+      ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+      const glow = ctx.createRadialGradient(BASE_CX, BASE_Y, 10, BASE_CX, BASE_Y, 160);
+      glow.addColorStop(0, palette.glow);
+      glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(BASE_CX, BASE_Y, 160, 0, Math.PI * 2);
+      ctx.fill();
+
+      const topDrift = sway(1, timeSec);
+      ctx.save();
+      ctx.translate(topDrift * 0.15, 0);
+      const shadow = ctx.createRadialGradient(BASE_CX, BASE_Y + 12, 5, BASE_CX, BASE_Y + 12, 110);
+      shadow.addColorStop(0, palette.shadowInner);
+      shadow.addColorStop(1, palette.shadowOuter);
+      ctx.fillStyle = shadow;
+      ctx.beginPath();
+      ctx.ellipse(BASE_CX, BASE_Y + 12, 110, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalAlpha = 0.24;
+      for (const segment of segments) {
+        drawFloorTop(
+          ctx,
+          segment.cx,
+          segment.y,
+          segment.w,
+          segment.d,
+          segment.skew,
+          0,
+          "rgba(0,0,0,0)",
+          palette.ghost,
+          0.8,
+          [5, 4],
+          false,
+        );
+      }
+      ctx.restore();
+
+      const arrowCount = 10;
+      for (let i = 0; i < arrowCount; i++) {
+        const ay = 140 + i * 34;
+        const pulse = Math.sin(timeSec * 2.8 - i * 0.55) * 0.5 + 0.5;
+        const len = 52 + pulse * 26;
+        const alpha = 0.32 + pulse * 0.52;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        const grad = ctx.createLinearGradient(32, ay, 32 + len, ay);
+        grad.addColorStop(0, palette.windStart);
+        grad.addColorStop(1, palette.windEnd);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = i % 3 === 0 ? 2.1 : 1.5;
+        ctx.beginPath();
+        ctx.moveTo(32, ay);
+        ctx.lineTo(32 + len, ay);
+        ctx.stroke();
+
+        ctx.fillStyle = palette.windHead(alpha);
+        ctx.beginPath();
+        ctx.moveTo(32 + len + 9, ay);
+        ctx.lineTo(32 + len, ay - 5);
+        ctx.lineTo(32 + len, ay + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      for (let i = 1; i < segments.length; i++) {
+        const top = segments[i];
+        const bot = segments[i - 1];
+        const dxTop = sway(top.t, timeSec);
+        const dxBot = sway(bot.t, timeSec);
+
+        ctx.beginPath();
+        ctx.moveTo(top.cx + dxTop + top.w / 2, top.y);
+        ctx.lineTo(top.cx + dxTop + top.w / 2 + top.skew, top.y - top.d);
+        ctx.lineTo(bot.cx + dxBot + bot.w / 2 + bot.skew, bot.y - bot.d);
+        ctx.lineTo(bot.cx + dxBot + bot.w / 2, bot.y);
+        ctx.closePath();
+
+        const midT = (top.t + bot.t) / 2;
+        ctx.fillStyle = palette.sideFace(midT);
+        ctx.fill();
+
+        ctx.strokeStyle = palette.sideEdge(midT);
+        ctx.lineWidth = 0.55;
+        ctx.stroke();
+      }
+
+      for (let i = 1; i < segments.length; i++) {
+        const top = segments[i];
+        const bot = segments[i - 1];
+        const dxTop = sway(top.t, timeSec);
+        const dxBot = sway(bot.t, timeSec);
+
+        ctx.beginPath();
+        ctx.moveTo(top.cx + dxTop - top.w / 2, top.y);
+        ctx.lineTo(top.cx + dxTop + top.w / 2, top.y);
+        ctx.lineTo(bot.cx + dxBot + bot.w / 2, bot.y);
+        ctx.lineTo(bot.cx + dxBot - bot.w / 2, bot.y);
+        ctx.closePath();
+
+        const grad = ctx.createLinearGradient(top.cx + dxTop - top.w / 2, 0, top.cx + dxTop + top.w / 2, 0);
+        grad.addColorStop(0, palette.frontLeft);
+        grad.addColorStop(0.45, palette.frontMid);
+        grad.addColorStop(1, palette.frontRight);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+
+      const fractions = [-0.42, -0.14, 0.14, 0.42];
+      for (let i = 1; i < segments.length; i++) {
+        const top = segments[i];
+        const bot = segments[i - 1];
+        const dxTop = sway(top.t, timeSec);
+        const dxBot = sway(bot.t, timeSec);
+
+        for (const c of fractions) {
+          ctx.strokeStyle = palette.column;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(top.cx + dxTop + c * top.w, top.y);
+          ctx.lineTo(bot.cx + dxBot + c * bot.w, bot.y);
+          ctx.stroke();
+
+          ctx.strokeStyle = palette.columnRear;
+          ctx.lineWidth = 0.6;
+          ctx.beginPath();
+          ctx.moveTo(top.cx + dxTop + c * top.w + top.skew, top.y - top.d);
+          ctx.lineTo(bot.cx + dxBot + c * bot.w + bot.skew, bot.y - bot.d);
+          ctx.stroke();
+        }
+      }
+
+      for (const segment of segments) {
+        const dx = sway(segment.t, timeSec);
+        drawFloorTop(
+          ctx,
+          segment.cx + dx,
+          segment.y,
+          segment.w,
+          segment.d,
+          segment.skew,
+          0,
+          "rgba(0,0,0,0)",
+          stressHue(segment.t),
+          1.6 + segment.t * 0.5,
+          null,
+          true,
+        );
+      }
+
+      const profileX = 512;
+      const profileBase = BASE_Y;
+      const profileTop = BASE_Y - HEIGHT_PX;
+      const profileH = profileBase - profileTop;
+      const profileScale = 4.3;
+
+      ctx.beginPath();
+      ctx.moveTo(profileX, profileBase);
+      for (let i = 0; i <= 64; i++) {
+        const frac = i / 64;
+        const py = profileBase - frac * profileH;
+        const drift = sway(frac, timeSec) * profileScale;
+        ctx.lineTo(profileX + drift, py);
+      }
+      ctx.lineTo(profileX, profileTop);
+
+      const profileFill = ctx.createLinearGradient(0, profileBase, 0, profileTop);
+      profileFill.addColorStop(0, palette.profileFillA);
+      profileFill.addColorStop(1, palette.profileFillB);
+      ctx.fillStyle = profileFill;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(profileX, profileBase);
+      for (let i = 0; i <= 64; i++) {
+        const frac = i / 64;
+        const py = profileBase - frac * profileH;
+        const drift = sway(frac, timeSec) * profileScale;
+        ctx.lineTo(profileX + drift, py);
+      }
+      ctx.strokeStyle = palette.profileLine;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath();
+      ctx.moveTo(profileX, profileBase);
+      ctx.lineTo(profileX, profileTop);
+      ctx.strokeStyle = palette.baseline;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = palette.caption;
+      ctx.font = "600 10px 'JetBrains Mono', monospace";
+      ctx.fillText("WIND +X", 34, 44);
+      ctx.fillText("DRIFT", profileX + 18, profileTop - 8);
+    };
+
+    const loop = (timestamp: number): void => {
+      render(timestamp / 1000);
+      frame = window.requestAnimationFrame(loop);
+    };
+
+    const drawCurrent = (): void => {
+      const seconds = performance.now() / 1000;
+      render(seconds);
+    };
+
+    if (reduceMotion) {
+      drawCurrent();
+    } else {
+      frame = window.requestAnimationFrame(loop);
+    }
+
+    const observer = new MutationObserver(() => {
+      if (reduceMotion) {
+        drawCurrent();
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="relative flex items-center justify-center w-full">
-      {/* Ambient glow behind diagram */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse at 55% 50%, hsl(var(--primary) / 0.08) 0%, transparent 65%)",
-        }}
-        aria-hidden="true"
-      />
-
-      <svg
-        viewBox="0 0 440 380"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full overflow-visible relative z-10"
+    <div className="w-full">
+      <canvas
+        ref={canvasRef}
+        width={CANVAS_W}
+        height={CANVAS_H}
+        className="block w-full h-auto bg-transparent"
         role="img"
-        aria-label="Animated structural frame analysis diagram showing beam deflection under load"
-      >
-        <defs>
-          {/* Engineering grid */}
-          <pattern
-            id="hv-grid"
-            width="22"
-            height="22"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M 22 0 L 0 0 0 22"
-              fill="none"
-              stroke="hsl(var(--primary) / 0.07)"
-              strokeWidth="0.5"
-            />
-          </pattern>
-
-          {/* Beam stress gradient — animates colours */}
-          <linearGradient id="hv-stress" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="hsl(220 70% 45%)">
-              <animate
-                attributeName="stop-color"
-                values="hsl(220 70% 45%);hsl(220 70% 45%);hsl(220 70% 45%)"
-                dur="4s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="30%" stopColor="hsl(150 55% 45%)">
-              <animate
-                attributeName="stop-color"
-                values="hsl(150 55% 45%);hsl(40 75% 40%);hsl(150 55% 45%)"
-                dur="4s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="55%" stopColor="hsl(40 75% 40%)">
-              <animate
-                attributeName="stop-color"
-                values="hsl(40 75% 40%);hsl(15 65% 45%);hsl(40 75% 40%)"
-                dur="4s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="80%" stopColor="hsl(150 55% 45%)">
-              <animate
-                attributeName="stop-color"
-                values="hsl(150 55% 45%);hsl(40 75% 40%);hsl(150 55% 45%)"
-                dur="4s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="100%" stopColor="hsl(220 70% 45%)" />
-          </linearGradient>
-
-          {/* Moment diagram fill */}
-          <linearGradient id="hv-moment" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-          </linearGradient>
-
-          {/* Load arrow marker */}
-          <marker id="hv-arrow" markerWidth="7" markerHeight="7" refX="3.5" refY="7" orient="auto">
-            <path d="M0,0 L7,0 L3.5,7 Z" fill="hsl(var(--destructive))" />
-          </marker>
-        </defs>
-
-        {/* Background grid */}
-        <rect width="440" height="380" fill="url(#hv-grid)" opacity="0.8" />
-
-        {/* Ground line */}
-        <line x1="40" y1="310" x2="400" y2="310" stroke="hsl(var(--muted-foreground) / 0.3)" strokeWidth="1.5" />
-        {[56, 84, 116, 200, 324, 356, 384].map((x) => (
-          <line
-            key={x}
-            x1={x} y1="310" x2={x - 10} y2="322"
-            stroke="hsl(var(--muted-foreground) / 0.15)"
-            strokeWidth="1"
-          />
-        ))}
-
-        {/* Columns */}
-        {[80, 220, 360].map((x) => (
-          <line
-            key={x}
-            x1={x} y1="160" x2={x} y2="310"
-            stroke="hsl(var(--muted-foreground) / 0.5)"
-            strokeWidth="4"
-          />
-        ))}
-
-        {/* Pin supports */}
-        {[
-          [80, 310, 66, 334, 94, 334],
-          [220, 310, 206, 334, 234, 334],
-          [360, 310, 346, 334, 374, 334],
-        ].map(([cx, cy, x1, y1, x2, y2], i) => (
-          <g key={i}>
-            <polygon
-              points={`${cx},${cy} ${x1},${y1} ${x2},${y2}`}
-              fill="none"
-              stroke="hsl(var(--muted-foreground) / 0.5)"
-              strokeWidth="1.5"
-            />
-            <line
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke="hsl(var(--muted-foreground) / 0.25)"
-              strokeWidth="1.5"
-            />
-          </g>
-        ))}
-
-        {/* Ghost beam (undeflected) */}
-        <line x1="80" y1="160" x2="360" y2="160" stroke="hsl(var(--primary) / 0.15)" strokeWidth="2" strokeDasharray="5,5" />
-
-        {/* Deflected beam — stress colour fill */}
-        <path stroke="url(#hv-stress)" strokeWidth="14" fill="none" strokeLinecap="round">
-          <animate
-            attributeName="d"
-            values="M80,160 Q150,160 220,160 Q290,160 360,160;M80,160 Q150,205 220,212 Q290,205 360,160;M80,160 Q150,205 220,212 Q290,205 360,160;M80,160 Q150,160 220,160 Q290,160 360,160"
-            dur="4s"
-            repeatCount="indefinite"
-            calcMode="spline"
-            keySplines="0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1"
-          />
-        </path>
-
-        {/* Beam outline */}
-        <path stroke="hsl(var(--primary) / 0.75)" strokeWidth="2.5" fill="none" strokeLinecap="round">
-          <animate
-            attributeName="d"
-            values="M80,160 Q150,160 220,160 Q290,160 360,160;M80,160 Q150,205 220,212 Q290,205 360,160;M80,160 Q150,205 220,212 Q290,205 360,160;M80,160 Q150,160 220,160 Q290,160 360,160"
-            dur="4s"
-            repeatCount="indefinite"
-            calcMode="spline"
-            keySplines="0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1"
-          />
-        </path>
-
-        {/* Moment diagram */}
-        <path fill="url(#hv-moment)" stroke="hsl(var(--primary) / 0.2)" strokeWidth="1">
-          <animate
-            attributeName="d"
-            values="M80,160 Q220,160 360,160 L360,160 Q220,160 80,160 Z;M80,160 Q220,238 360,160 L360,160 Q220,160 80,160 Z;M80,160 Q220,238 360,160 L360,160 Q220,160 80,160 Z;M80,160 Q220,160 360,160 L360,160 Q220,160 80,160 Z"
-            dur="4s"
-            repeatCount="indefinite"
-            calcMode="spline"
-            keySplines="0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1"
-          />
-        </path>
-
-        {/* Load arrows */}
-        {[150, 220, 290].map((x) => (
-          <line
-            key={x}
-            x1={x} x2={x} y1="64" markerEnd="url(#hv-arrow)"
-            stroke="hsl(var(--destructive))"
-            strokeWidth="2"
-          >
-            <animate
-              attributeName="y2"
-              values="148;155;155;148"
-              dur="4s"
-              repeatCount="indefinite"
-              calcMode="spline"
-              keySplines="0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1"
-            />
-          </line>
-        ))}
-        <line x1="130" y1="48" x2="310" y2="48" stroke="hsl(var(--destructive) / 0.4)" strokeWidth="1.5" />
-        <text x="162" y="42" fontFamily="monospace" fontSize="10" fill="hsl(var(--destructive) / 0.7)">
-          <animate attributeName="opacity" values="0.6;1;1;0.6" dur="4s" repeatCount="indefinite" />
-          w (UDL)
-        </text>
-
-        {/* Nodes */}
-        <circle cx="80"  cy="160" r="5.5" fill="hsl(var(--primary))" />
-        <circle cx="360" cy="160" r="5.5" fill="hsl(var(--primary))" />
-        <circle cx="220" fill="hsl(var(--primary))">
-          <animate attributeName="cy"   values="160;212;212;160" dur="4s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0 0 1 1;0.4 0 0.6 1" />
-          <animate attributeName="r"    values="5.5;8.5;8.5;5.5" dur="4s" repeatCount="indefinite" />
-          <animate attributeName="fill" values="hsl(var(--primary));hsl(var(--destructive));hsl(var(--destructive));hsl(var(--primary))" dur="4s" repeatCount="indefinite" />
-        </circle>
-
-        {/* Dimension line */}
-        <g opacity="0.28">
-          <line x1="80" y1="356" x2="360" y2="356" stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-          <line x1="80"  y1="348" x2="80"  y2="364" stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-          <line x1="360" y1="348" x2="360" y2="364" stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-          <text x="220" y="372" fontFamily="monospace" fontSize="10" fill="hsl(var(--muted-foreground))" textAnchor="middle">
-            L = span
-          </text>
-        </g>
-
-        {/* Floating labels */}
-        <g>
-          <animate attributeName="opacity" values="0;0;1;1;0" dur="4s" repeatCount="indefinite" keyTimes="0;0.3;0.45;0.75;1" />
-          <line x1="232" y1="185" x2="250" y2="200" stroke="hsl(var(--primary) / 0.4)" strokeWidth="1" strokeDasharray="2,2" />
-          <text x="252" y="204" fontFamily="monospace" fontSize="9.5" fill="hsl(var(--primary))">max δ</text>
-        </g>
-        <text x="302" y="118" fontFamily="monospace" fontSize="9" fill="hsl(var(--destructive) / 0.75)" textAnchor="middle">
-          <animate attributeName="opacity" values="0;0;0;1;0" dur="4s" repeatCount="indefinite" keyTimes="0;0.25;0.4;0.65;1" />
-          σ critical
-        </text>
-
-        {/* Corner watermark */}
-        <text x="430" y="16" fontFamily="monospace" fontSize="8" fill="hsl(var(--primary) / 0.2)" textAnchor="end">
-          FEM — 2D FRAME
-        </text>
-      </svg>
+        aria-label="Animated high-rise tower under wind load with lateral sway"
+      />
     </div>
   );
 }

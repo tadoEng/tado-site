@@ -1,9 +1,9 @@
 ---
-title: "Building ETABSSharp: A C# Wrapper for the ETABS API"
-description: "The raw ETABS API is verbose and weakly typed. Here's how I designed a fluent C# wrapper that makes structural automation actually enjoyable to write."
-publishDate: 2026-04-01
+title: "Building ETABSharp: A C# Wrapper for the ETABS API"
+description: "The raw ETABS API is verbose and weakly typed. Here's how I designed a fluent C# wrapper that makes structural automation actually enjoyable to write and get help from LLM."
+publishDate: 2026-03-10
 lane: "dev"
-tags: ["etabs", "csharp", "open-source", "automation"]
+tags: ["etabs", "csharp", "mcp", "automation"]
 featured: true
 draft: false
 readingTime: 14
@@ -16,55 +16,77 @@ Methods are stringly typed. There's no IntelliSense guidance on what parameters 
 Error handling is COM-era `ref` parameters. You end up writing the same boilerplate
 fifty times per script.
 
-**ETABSSharp** is a C# wrapper that fixes this.
+**ETABSharp** is a C# wrapper that fixes this.
 
 ## The problem with the raw API
 
-Here's a typical raw ETABS API call to get story drift results:
+The pain is not only one API call. In real automation, you have to orchestrate
+stateful ETABS sessions safely:
+
+- `Mode A` attach to a running ETABS and never kill the user's app
+- `Mode B` start a hidden ETABS instance, run a batch task, and always close it
+- Handle model lock/unlock before edits
+- Suppress save prompts in unattended flows
+- Check dozens of integer return codes (`ret != 0`) after every operation
+
+This is the kind of control flow you end up writing:
 
 ```csharp
-// Raw ETABS API — what you normally write
-int numberResults = 0;
-string[] storyName = Array.Empty<string>();
-string[] loadCase = Array.Empty<string>();
-string[] stepType = Array.Empty<string>();
-double[] stepNum = Array.Empty<double>();
-double[] driftX = Array.Empty<double>();
-double[] driftY = Array.Empty<double>();
-
-int ret = model.Results.StoryDrifts(
-    ref numberResults,
-    ref storyName,
-    ref loadCase,
-    ref stepType,
-    ref stepNum,
-    ref driftX,
-    ref driftY
-);
-
-if (ret != 0) throw new Exception("Failed to get story drifts");
-```
-
-That's 15 lines to get one result table. The `ref` arrays are pre-allocated
-by the API — there's no type safety on what you pass in, and if `ret != 0`
-you get no information about what went wrong.
-
-## The ETABSSharp approach
-
-With ETABSSharp, the same operation becomes:
-
-```csharp
-// ETABSSharp — what you write instead
-var drifts = await etabs.Results.StoryDriftsAsync();
-
-foreach (var drift in drifts)
+ETABSApplication? app = null;
+try
 {
-    Console.WriteLine($"{drift.Story} | {drift.LoadCase} | DX: {drift.DriftX:F4}");
+    // Mode B: create isolated hidden ETABS
+    app = ETABSWrapper.CreateNew(startApplication: true);
+    if (app == null) throw new Exception("Failed to create ETABS instance.");
+
+    app.Application.Hide();
+
+    int openRet = app.Model.Files.OpenFile(TEST_MODEL_PATH);
+    if (openRet != 0) throw new Exception($"OpenFile failed: {openRet}");
+
+    if (app.Model.ModelInfo.IsLocked())
+        app.Model.ModelInfo.SetLocked(false);
+
+    int analysisRet = app.Model.Analyze.RunCompleteAnalysis();
+    if (analysisRet != 0) throw new Exception($"RunCompleteAnalysis failed: {analysisRet}");
+
+    int saveRet = app.Model.Files.SaveFile(TEST_MODEL_PATH);
+    if (saveRet != 0) throw new Exception($"SaveFile failed: {saveRet}");
+}
+finally
+{
+    // Critical: hidden instance must always be closed
+    if (app != null) app.Application.ApplicationExit(false);
 }
 ```
 
-Strongly typed. Async-capable. `drift.Story` gives you IntelliSense.
-If the API call fails, you get a proper exception with a message.
+And if you need **joint displacement** from raw COM, you still have the long
+`Results.JointDispl(...)` signature with many `ref` arrays.
+
+## The ETABSharp approach
+
+ETABSharp wraps the common automation paths so the intent is clearer.
+For example, in your sidecar tests:
+
+```csharp
+var app = ETABSWrapper.Connect(); // Mode A: attach to running ETABS
+if (app == null) return;
+
+var filePath = app.Model.ModelInfo.GetModelFilename(includePath: true);
+var isLocked = app.Model.ModelInfo.IsLocked();
+var caseStatuses = app.Model.Analyze.GetCaseStatus();
+var isAnalyzed = caseStatuses.Any(cs => cs.IsFinished);
+
+Console.WriteLine($"File: {filePath}");
+Console.WriteLine($"Locked: {isLocked}");
+Console.WriteLine($"Analyzed: {isAnalyzed}");
+
+// Typed wrapper result instead of manual COM ref arrays
+var jointDispl = app.Model.AnalysisResults.GetJointDispl("Joint28", eItemTypeElm.GroupElm);
+Console.WriteLine($"Joint displacement rows: {jointDispl.NumberResults}");
+```
+
+Same ETABS power, but cleaner orchestration and safer session lifecycle rules.
 
 ## Architecture decisions
 
@@ -74,7 +96,8 @@ ETABSSharp wraps the ETABS COM API — it doesn't try to replace it.
 Every method maps 1:1 to an ETABS API call. This means:
 
 - The full API surface is available
-- Behaviour is predictable — if ETABS does it, ETABSSharp can do it
+- Result pattern
+- Behaviour is predictable — if ETABS does it, ETABSharp can do it
 - No magic or hidden logic
 
 ### 2. Result types instead of `ref` parameters
@@ -82,38 +105,49 @@ Every method maps 1:1 to an ETABS API call. This means:
 Every output is a strongly typed record:
 
 ```csharp
-public record StoryDrift(
-    string Story,
+public record JointDisplacement(
+    string Obj,
     string LoadCase,
     string StepType,
     double StepNum,
-    double DriftX,
-    double DriftY
+    double U1,
+    double U2,
+    double U3
 );
 ```
 
 ### 3. Fluent access pattern
-
+Can get results dirrect from API or you can get table results for those table dont have direct api like `material table`
 ```csharp
-var etabs = await ETABSSharp.Connect();
+var etabs = await ETABSWrapper.Connect();
 
 // Navigate to what you need
-var frameForces = await etabs
-    .Results
-    .FrameForces(loadCase: "1.2D + 1.6L");
+var frameForces = app.Model
+    .AnalysisResults
+    .FrameForces("level6",eItemTypeElm.GroupElm );
+
+// Get table from etabs model
+var tableResults = app.Model
+    .DatabaseTables
+    .GetTableForDisplayArray(tableKey, fieldKeys, group);
 ```
 
 ## The AI layer
 
-The real reason I built ETABSSharp isn't just the cleaner API — it's what the
-clean API enables: an **MCP server** that lets AI assistants talk to ETABS directly.
+The real reason I built ETABSharp isn't just the cleaner API — it's what the
+clean API enables: an **MCP server** that lets AI assistants talk to ETABS directly and building .
 
 More on that in the next post.
 
 ## Get it
 
-- **GitHub:** [github.com/tadoEng/etabssharp](https://github.com/tado/etabssharp)
-- **NuGet:** `dotnet add package ETABSSharp`
+- GitHub: [github.com/tadoEng/EtabSharp](https://github.com/tadoEng/EtabSharp)
+- Doc: [deepwiki.com/tadodev/EtabSharp](https://deepwiki.com/tadodev/EtabSharp)
+- NuGet:
+
+```bash
+dotnet add package EtabSharp --version 0.3.1-beta
+```
 
 If you're automating ETABS with C# and you have questions, open an issue or
 reach out. I use this in production work every week.

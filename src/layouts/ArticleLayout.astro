@@ -115,7 +115,7 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
         <Separator class="mb-10" />
 
-        <div class="article-prose">
+        <div class="article-prose prose prose-neutral dark:prose-invert max-w-none">
           <slot />
         </div>
 
@@ -215,18 +215,11 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 </BaseLayout>
 
 <script>
-  const bar = document.getElementById("reading-progress");
-  if (bar) {
-    window.addEventListener("scroll", () => {
-      const el = document.documentElement;
-      const total = el.scrollHeight - el.clientHeight;
-      bar.style.width = total > 0 ? (el.scrollTop / total) * 100 + "%" : "0%";
-    }, { passive: true });
-  }
-
-  async function copyText(text: string): Promise<boolean> {
-    try { await navigator.clipboard.writeText(text); return true; }
-    catch {
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.setAttribute("readonly", "");
@@ -239,45 +232,127 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
     }
   }
 
-  function enhanceCodeBlocks() {
-    document.querySelectorAll<HTMLElement>("article .article-prose pre").forEach((pre) => {
-      if (pre.parentElement?.classList.contains("code-block-wrap")) return;
-      const code      = pre.querySelector("code");
-      const raw       = (code?.textContent ?? pre.textContent ?? "").replace(/\n$/, "");
-      const langClass = [...(code?.classList ?? [])].find((c) => c.startsWith("language-"));
-      const language  = langClass ? langClass.replace("language-", "").replace(/[-_]/g, " ") : "text";
-      const lines     = (code?.textContent ?? "").split("\n")
-        .filter((l, i, arr) => !(i === arr.length - 1 && l === "")).length;
+  function normalizeLanguageLabel(input) {
+    const raw = (input ?? "").trim().toLowerCase();
+    if (!raw) return "text";
 
-      const wrap = document.createElement("div"); wrap.className = "code-block-wrap";
-      const toolbar = document.createElement("div"); toolbar.className = "code-block-toolbar";
-      const left = document.createElement("div"); left.className = "code-block-left";
-      const lang = document.createElement("span"); lang.className = "code-block-lang"; lang.textContent = language;
-      const lineCount = document.createElement("span"); lineCount.className = "code-block-lines";
+    const aliases = {
+      py: "python",
+      js: "javascript",
+      mjs: "javascript",
+      cjs: "javascript",
+      ts: "typescript",
+      tsx: "typescript",
+      mts: "typescript",
+      cts: "typescript",
+      typescripts: "typescript",
+      jsx: "javascript",
+      csharp: "c#",
+      cs: "c#",
+      fsharp: "f#",
+      fs: "f#",
+      cpp: "c++",
+      cxx: "c++",
+      rs: "rust",
+      rustlang: "rust",
+      sh: "bash",
+      shell: "bash",
+      ps1: "powershell",
+      plaintext: "text",
+      plain: "text",
+    };
+
+    return (aliases[raw] ?? raw).replace(/[-_]/g, " ");
+  }
+
+  function initReadingProgress() {
+    const bar = document.getElementById("reading-progress");
+    if (!bar) return;
+
+    const update = () => {
+      const el = document.documentElement;
+      const total = el.scrollHeight - el.clientHeight;
+      bar.style.width = total > 0 ? `${(el.scrollTop / total) * 100}%` : "0%";
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+  }
+
+  function enhanceCodeBlocks() {
+    document.querySelectorAll("article .article-prose pre").forEach((pre) => {
+      if (pre.parentElement?.classList.contains("code-block-wrap")) return;
+
+      const code = pre.querySelector("code");
+      const raw = (code?.textContent ?? pre.textContent ?? "").replace(/\n$/, "");
+      const langClass = [...(code?.classList ?? pre.classList ?? [])].find((c) =>
+        c.startsWith("language-")
+      );
+      const language = normalizeLanguageLabel(
+        pre.dataset.language ?? (langClass ? langClass.replace("language-", "") : "text")
+      );
+      const lines = (code?.textContent ?? "")
+        .split("\n")
+        .filter((line, i, arr) => !(i === arr.length - 1 && line === "")).length;
+
+      const wrap = document.createElement("div");
+      wrap.className = "code-block-wrap";
+
+      const toolbar = document.createElement("div");
+      toolbar.className = "code-block-toolbar";
+
+      const left = document.createElement("div");
+      left.className = "code-block-left";
+
+      const lang = document.createElement("span");
+      lang.className = "code-block-lang";
+      lang.textContent = language;
+
+      const lineCount = document.createElement("span");
+      lineCount.className = "code-block-lines";
       lineCount.textContent = `${lines} line${lines !== 1 ? "s" : ""}`;
-      const btn = document.createElement("button"); btn.type = "button"; btn.className = "code-copy-btn";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "code-copy-btn";
       btn.setAttribute("aria-label", `Copy ${language} code`);
 
-      const copyIcon  = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
-      const checkIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M2 7l3.5 3.5L11 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const copyIcon =
+        '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 9H2a1 1 0 01-1-1V2a1 1 0 011-1h6a1 1 0 011 1v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+      const checkIcon =
+        '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M2 7l3.5 3.5L11 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       btn.innerHTML = `${copyIcon}<span>Copy</span>`;
 
       btn.addEventListener("click", async () => {
         const ok = await copyText(raw);
-        if (ok) { btn.innerHTML = `${checkIcon}<span>Copied!</span>`; btn.classList.add("copied"); }
-        setTimeout(() => { btn.innerHTML = `${copyIcon}<span>Copy</span>`; btn.classList.remove("copied"); }, 1800);
+        if (ok) {
+          btn.innerHTML = `${checkIcon}<span>Copied!</span>`;
+          btn.classList.add("copied");
+        }
+        setTimeout(() => {
+          btn.innerHTML = `${copyIcon}<span>Copy</span>`;
+          btn.classList.remove("copied");
+        }, 1800);
       });
 
-      left.appendChild(lang); left.appendChild(lineCount);
-      toolbar.appendChild(left); toolbar.appendChild(btn);
+      left.appendChild(lang);
+      left.appendChild(lineCount);
+      toolbar.appendChild(left);
+      toolbar.appendChild(btn);
       pre.parentElement?.insertBefore(wrap, pre);
-      wrap.appendChild(toolbar); wrap.appendChild(pre);
+      wrap.appendChild(toolbar);
+      wrap.appendChild(pre);
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", enhanceCodeBlocks, { once: true });
-  } else {
+  const boot = () => {
+    initReadingProgress();
     enhanceCodeBlocks();
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
   }
 </script>

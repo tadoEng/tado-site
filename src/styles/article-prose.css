@@ -53,6 +53,7 @@
   text-indent: 0;
   font-weight: 400;
   color: hsl(var(--foreground) / 0.88);
+  text-wrap: pretty;
 }
 .article-prose p + p {
   margin-top: var(--article-paragraph-gap);
@@ -72,6 +73,7 @@
 .article-prose h3,
 .article-prose h4 {
   scroll-margin-top: calc(var(--toc-top, 5.5rem) + 0.5rem);
+  text-wrap: balance;
 }
 
 /* ── H2 — JetBrains style: bold, generous top spacing ── */
@@ -155,14 +157,41 @@
   margin-top: 0.875rem;
   margin-bottom: 1.375rem;
   padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.article-prose ul {
+  list-style-type: disc;
+}
+
+.article-prose ol {
+  list-style-type: decimal;
 }
 .article-prose li {
   margin-bottom: 0.45rem;
   color: hsl(var(--foreground) / 0.88);
   line-height: 1.75;
+  text-wrap: pretty;
 }
 .article-prose li + li {
   margin-top: 0.2rem;
+}
+.article-prose li > ul,
+.article-prose li > ol {
+  margin-top: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+.article-prose ul ul {
+  list-style-type: circle;
+}
+.article-prose ul ul ul {
+  list-style-type: square;
+}
+.article-prose ol ol {
+  list-style-type: lower-alpha;
+}
+.article-prose ol ol ol {
+  list-style-type: lower-roman;
 }
 .article-prose ul > li::marker {
   color: hsl(var(--primary) / 0.6);
@@ -185,6 +214,11 @@
   font-style: italic;
 }
 .article-prose blockquote p:last-child { margin-bottom: 0; }
+.dark .article-prose blockquote {
+  border-left-color: hsl(var(--primary) / 0.85);
+  background: hsl(220 18% 14% / 0.85);
+  color: hsl(var(--foreground) / 0.9);
+}
 
 /* ── Tables ─────────────────────────────────────────────── */
 
@@ -198,6 +232,7 @@
   background: hsl(var(--muted));
   font-weight: 600;
   text-align: left;
+  vertical-align: top;
   padding: 0.6rem 0.875rem;
   border-bottom: 2px solid hsl(var(--border));
   font-family: "JetBrains Mono", monospace;
@@ -207,6 +242,7 @@
   color: hsl(var(--muted-foreground));
 }
 .article-prose td {
+  vertical-align: top;
   padding: 0.55rem 0.875rem;
   border-bottom: 1px solid hsl(var(--border) / 0.6);
 }
