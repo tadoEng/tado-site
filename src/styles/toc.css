@@ -1,188 +1,201 @@
 /* ═══════════════════════════════════════════════════════════
-   TABLE OF CONTENTS — verified against JetBrains blog devtools
+   TABLE OF CONTENTS
 
-   Confirmed values from console:
-   • Active ::before  → width:4px, left:-3px, bg:rgb(107,87,255)
-   • Inactive ::before → width:1px, bg:rgba(25,25,28,0.2)
-   • ol.toc-list border-left → 0px  ← NO list border at all
-     The visual track line is painted by EACH LINK'S ::before,
-     not by a border on the list.
+   LAYOUT CONTRACT
+   ───────────────────────────────────────────────────────────
+   ArticleLayout / projects/[id].astro use:
 
-   Dark mode uses .dark class (shadcn/starwind), NOT
-   prefers-color-scheme — that's why the rgba values need
-   explicit .dark overrides for the inactive track.
+     grid-cols-[minmax(0,1fr)_280px]  +  items-start
+
+   `items-start` is the critical rule — it prevents the aside
+   from stretching to the article's full height.  When the
+   aside is only as tall as the TOC panel, `position: sticky`
+   has room to travel.  Without it the aside == article height
+   and sticky never activates.
+
+   Stack inside the aside:
+     <aside class="hidden lg:block self-start">   ← grid item
+       <div class="toc-outer">                    ← sticky anchor
+         <nav  class="toc-inner no-scrollbar">    ← scroll container
+         </nav>
+       </div>
+     </aside>
+
+   KEY RULE: the sticky element (.toc-outer) must NOT have
+   overflow set on it — overflow kills sticky.  The inner
+   scroll is handled by .toc-inner instead.
 ═══════════════════════════════════════════════════════════ */
 
-/* ── Sticky wrapper ──────────────────────────────────────── */
-/*
-  overflow-y here is SAFE — overflow on the sticky element
-  itself does not break stickiness. Only overflow on a
-  PARENT or CHILD breaks it.
-*/
+/* ── Sticky anchor ────────────────────────────────────────── */
+
 .toc-outer {
   position: sticky;
+  /*
+    Fallback: stress-bar(3px) + nav(56px) + gap(16px) = 75px.
+    Nav.astro's script updates --toc-top dynamically as the nav
+    hides/shows on scroll.  The transition keeps the TOC from
+    jumping when the nav slides away.
+  */
   top: var(--toc-top, 75px);
   transition: top 0.3s ease;
-  width: 100%;
+}
+
+/* ── Inner scroll container ───────────────────────────────── */
+
+.toc-inner {
   max-height: calc(100vh - var(--toc-top, 75px) - 2rem);
   overflow-y: auto;
+  padding: 0;
+  transition:
+    max-height 0.3s ease,
+    opacity    0.2s ease;
+
+  /*
+    Start invisible.  TableOfContents.astro's script adds
+    .is-ready after initialisation so the panel fades in
+    only when JS has confirmed headings exist and set up
+    the active-state tracking.
+  */
+  opacity: 0;
 }
 
-/* Scrollbar on the sticky element itself */
-.toc-outer::-webkit-scrollbar       { width: 6px; }
-.toc-outer::-webkit-scrollbar-track { background: rgba(25,25,28,0.1); border-radius: 2px; }
-.toc-outer::-webkit-scrollbar-thumb { background: rgba(25,25,28,0.4); border-radius: 2px; }
-.dark .toc-outer::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
-.dark .toc-outer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); }
-
-/* ── Inner nav ───────────────────────────────────────────── */
-/*
-  NO overflow-y here. An overflow on .toc-inner creates a
-  nested scroll container — the browser treats it as already
-  scrollable, so position:sticky on .toc-outer never activates
-  and the TOC stays frozen at its initial position on scroll.
-
-  The TOC renders at its natural height. For articles with
-  very many headings, add a max-height + overflow-y on
-  .toc-outer instead (the sticky element itself can scroll
-  without breaking stickiness when overflow is on itself,
-  not a child).
-*/
-.toc-inner {
-  padding-left: 5px;
-  padding-top: 16px;
-  font-size: 13px;
-  line-height: 1.54;
-  letter-spacing: 0.0045em;
+.toc-inner.is-ready {
+  opacity: 1;
 }
 
-/* ── "On this page" header ───────────────────────────────── */
+/* ── Header label ─────────────────────────────────────────── */
+
 .toc-header {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.7rem;
-  font-weight: 700;
+  gap: 0.45rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: hsl(var(--muted-foreground));
-  margin-bottom: 0.5rem;
-  padding-left: 20px;
+  margin-bottom: 0.75rem;
+  padding: 0 0 0 0.5rem;
 }
 
-/* ── List — NO border (confirmed: list borderLeft = 0px) ─── */
+/* ── Link list ────────────────────────────────────────────── */
+
 .toc-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  /* intentionally no border-left — the track is each link's ::before */
+  border-left: 1.5px solid hsl(var(--border));
 }
 
-.toc-list li { padding: 0; }
+/* ── Individual TOC link ──────────────────────────────────── */
 
-/* ── Link ────────────────────────────────────────────────── */
 .toc-link {
   position: relative;
-  display: block;
-  padding: 6px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-left: -1.5px;
+  padding: 0.34rem 0.5rem 0.34rem 0.875rem;
+  font-family: var(--article-font-family-body);
+  font-size: 0.8125rem;
+  line-height: 1.45;
   color: hsl(var(--muted-foreground));
   text-decoration: none;
-  font-weight: 400;
-  transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+  border-left: 1.5px solid transparent;
+  border-radius: 0 0.3rem 0.3rem 0;
+  transition:
+    color        0.12s ease,
+    border-color 0.12s ease,
+    background   0.12s ease;
 }
 
-/*
-  The ::before IS the track line.
-  Inactive: width 1px, rgba(25,25,28,0.2) — confirmed from devtools.
-  Active:   width 4px, left -3px, rgb(107,87,255) — confirmed from devtools.
-  Runs full height via top:0 bottom:0 — confirmed: height 31.5px.
-*/
-.toc-link::before {
-  content: " ";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -3px;
-  width: 1px;
-  background: rgba(25, 25, 28, 0.2);
-  transition: width 0.15s ease-in-out, background 0.15s ease-in-out;
-}
-
-.dark .toc-link::before {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Hover */
 .toc-link:hover {
-  text-decoration: none;
-  background: rgba(25, 25, 28, 0.1);
-  color: hsl(var(--foreground));
+  color: hsl(var(--foreground) / 0.85);
+  background: hsl(var(--muted) / 0.5);
 }
 
-.dark .toc-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
+/* Active — primary-coloured left border */
 
-/* Active — confirmed: font-weight 400 */
 .toc-link.active {
-  color: hsl(var(--foreground));
-  font-weight: 400;
+  color: hsl(var(--primary));
+  font-weight: 600;
+  border-left-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.05);
 }
 
-/* Active ::before — all values confirmed from devtools */
-.toc-link.active::before {
-  width: 4px;
-  left: -3px;
-  background: rgb(107, 87, 255); /* = #6b57ff, confirmed */
+/* ── Dot indicator (H3 sub-links only) ───────────────────── */
+
+.toc-pill {
+  display: none;
 }
 
-/* ── H3 sub-items ────────────────────────────────────────── */
+/* Sub-links (H3) — indented */
+
 .toc-link-sub {
-  padding-left: 26px;
-  opacity: 0.75;
+  padding-left: 1.5rem;
+  font-size: 0.775rem;
+  color: hsl(var(--muted-foreground) / 0.75);
 }
 
-.toc-link-sub.active {
+.toc-link-sub .toc-pill {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+  flex-shrink: 0;
+  margin-top: 0.56em;
+  transition: opacity 0.12s ease;
+}
+
+.toc-link-sub.active .toc-pill {
   opacity: 1;
+  background: hsl(var(--primary));
 }
 
-.toc-pill { display: none; }
-.toc-text  { display: inline; }
+.toc-text {
+  flex: 1;
+  min-width: 0;
+}
 
-/* ── Progress bar ────────────────────────────────────────── */
+/* ── Reading progress bar ─────────────────────────────────── */
+
 .toc-progress {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-left: 20px;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding-left: 0.5rem;
 }
 
 .toc-progress-track {
   flex: 1;
-  height: 2px;
-  background: rgba(25, 25, 28, 0.1);
+  height: 3px;
+  background: hsl(var(--border));
   border-radius: 99px;
   overflow: hidden;
-}
-
-.dark .toc-progress-track {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .toc-progress-bar {
   height: 100%;
   width: 0%;
-  background: rgb(107, 87, 255);
+  background: hsl(var(--primary));
   border-radius: 99px;
-  transition: width 0.1s linear;
+  transition: width 0.12s linear;
 }
 
 .toc-progress-pct {
-  font-size: 0.65rem;
   font-family: "JetBrains Mono", monospace;
+  font-size: 0.64rem;
   color: hsl(var(--muted-foreground));
-  min-width: 2.2rem;
+  min-width: 2.4rem;
   text-align: right;
   flex-shrink: 0;
 }
+
+/* ── Scrollbar suppression ────────────────────────────────── */
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
