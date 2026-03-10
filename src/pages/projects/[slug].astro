@@ -38,10 +38,10 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
   <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-300" : "max-w-article"}`}>
     <!--
-      items-start: prevents aside from stretching to article height —
-      required for position:sticky to work inside it.
+      Keep aside stretched to row height so sticky TOC has vertical
+      travel room for long articles.
     -->
-    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start" : ""}>
+    <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16" : ""}>
 
       <article>
         <Button
@@ -121,12 +121,8 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
         </div>
       </article>
 
-      <!--
-        self-start: aside is only as tall as its content,
-        giving .toc-outer (sticky) room to travel.
-      -->
       {hasToc && (
-        <aside class="hidden lg:block self-start">
+        <aside class="hidden lg:block self-stretch">
           <TableOfContents headings={headings} />
         </aside>
       )}

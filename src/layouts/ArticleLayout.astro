@@ -60,13 +60,13 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
       hasToc ? "max-w-300" : "max-w-article"
     }`}
   >
-    <div
-      class={
-        hasToc
-          ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16 items-start"
+      <div
+        class={
+          hasToc
+          ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16"
           : ""
-      }
-    >
+        }
+      >
       <article>
         <Button
           href="/writing"
@@ -206,7 +206,7 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
       </article>
 
       {hasToc && (
-        <aside class="hidden lg:block self-start">
+        <aside class="hidden lg:block self-stretch">
           <TableOfContents headings={headings} />
         </aside>
       )}

@@ -57,10 +57,15 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
 
 <script>
   (() => {
+    let teardown: (() => void) | null = null;
+
     // ── initToc ───────────────────────────────────────────────
     // Called once on first load and again on every Astro page
     // transition so the TOC always matches the current article.
     function initToc() {
+      teardown?.();
+      teardown = null;
+
       const toc = document.getElementById("toc");
       if (!toc) return;
 
@@ -73,8 +78,12 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
         .map((l) => document.getElementById(l.dataset.heading!))
         .filter((el): el is HTMLElement => el !== null);
 
+      if (!headingEls.length) return;
+
       const progressBar = document.getElementById("toc-progress-bar");
       const progressPct = document.getElementById("toc-progress-pct");
+      const headingIds = headingEls.map((el) => el.id);
+      const visibleIds = new Set<string>();
 
       // Track the currently highlighted link so we don't thrash the DOM
       // Start with a sentinel that won't match any real heading id so the
@@ -90,10 +99,29 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
           link.classList.toggle("active", isActive);
         });
 
-        // Scroll the active link into view inside the TOC panel (no page jump)
+        // Keep active link visible inside the TOC scroller only.
+        // Avoid element.scrollIntoView here because it can scroll the page
+        // viewport in some cases.
         const activeLink = toc!.querySelector<HTMLElement>(".toc-link.active");
-        if (activeLink) {
-          activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        const outer = toc!.closest<HTMLElement>(".toc-outer");
+        if (!activeLink || !outer) return;
+
+        const padding = 20;
+        const linkTop = activeLink.offsetTop;
+        const linkBottom = linkTop + activeLink.offsetHeight;
+        const viewTop = outer.scrollTop;
+        const viewBottom = viewTop + outer.clientHeight;
+
+        if (linkTop < viewTop + padding) {
+          outer.scrollTo({
+            top: Math.max(0, linkTop - padding),
+            behavior: "smooth",
+          });
+        } else if (linkBottom > viewBottom - padding) {
+          outer.scrollTo({
+            top: linkBottom - outer.clientHeight + padding,
+            behavior: "smooth",
+          });
         }
       }
 
@@ -109,12 +137,8 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
         return 75;
       }
 
-      function onScroll() {
-        const offset = getNavOffset() + 24; // 24px breathing room below nav
-
-        // Walk headings top-to-bottom; the last one whose top edge is at or
-        // above the threshold line is the "current" section.
-        let activeId = headingEls[0]?.id ?? "";
+      function pickByTopOffset(offset: number): string {
+        let activeId = "";
         for (const el of headingEls) {
           if (el.getBoundingClientRect().top - offset <= 0) {
             activeId = el.id;
@@ -122,7 +146,63 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
             break;
           }
         }
-        setActive(activeId);
+        return activeId || headingEls[0]?.id || "";
+      }
+
+      function pickFirstVisible(): string {
+        return headingIds.find((id) => visibleIds.has(id)) ?? "";
+      }
+
+      let observer: IntersectionObserver | null = null;
+      let observerOffset = -1;
+
+      function buildObserver() {
+        observer?.disconnect();
+        visibleIds.clear();
+
+        observerOffset = getNavOffset() + 10;
+        observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              const id = (entry.target as HTMLElement).id;
+              if (!id) continue;
+
+              if (entry.isIntersecting && entry.intersectionRatio > 0) {
+                visibleIds.add(id);
+              } else {
+                visibleIds.delete(id);
+              }
+            }
+
+            const active = pickFirstVisible() || pickByTopOffset(observerOffset);
+            setActive(active);
+          },
+          {
+            // Same pattern as Maxime Heckel's scrollspy: use rootMargin
+            // to account for a sticky header and create a top "active zone".
+            root: null,
+            rootMargin: `-${observerOffset}px 0px -65% 0px`,
+            threshold: [0, 1],
+          }
+        );
+
+        headingEls.forEach((el) => observer?.observe(el));
+      }
+
+      function onScroll() {
+        const offset = getNavOffset() + 10;
+
+        if (visibleIds.size === 0) {
+          setActive(pickByTopOffset(offset));
+        } else {
+          setActive(pickFirstVisible());
+        }
+
+        // If nav visibility changed, rebuild rootMargin so active detection
+        // stays aligned with the nav offset.
+        if (Math.abs(offset - observerOffset) > 1) {
+          buildObserver();
+        }
 
         // ── Reading progress bar ──────────────────────────────
         if (progressBar && progressPct) {
@@ -135,14 +215,11 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
       }
 
       // ── Smooth-scroll on link click ───────────────────────
+      const clickCleanup: Array<() => void> = [];
       links.forEach((link) => {
-        // Clone to remove any stale listener from a previous init call
-        const fresh = link.cloneNode(true) as HTMLAnchorElement;
-        link.parentElement!.replaceChild(fresh, link);
-
-        fresh.addEventListener("click", (e) => {
+        const clickHandler = (e: MouseEvent) => {
           e.preventDefault();
-          const id     = fresh.dataset.heading!;
+          const id = link.dataset.heading!;
           const target = document.getElementById(id);
           if (!target) return;
 
@@ -151,14 +228,16 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
           window.scrollTo({ top: y, behavior: "smooth" });
           history.pushState(null, "", `#${id}`);
           setActive(id); // optimistic — feels snappier than waiting for scroll event
-        });
+        };
+
+        link.addEventListener("click", clickHandler);
+        clickCleanup.push(() => link.removeEventListener("click", clickHandler));
       });
 
       // ── Reveal the panel (opacity transition in toc.css) ─
       toc.classList.add("is-ready");
 
-      // Run immediately so the correct heading is active on load
-      // without the user needing to scroll first.
+      buildObserver();
       onScroll();
 
       // ── Scroll listener ───────────────────────────────────
@@ -171,18 +250,37 @@ const filtered = headings.filter((h) => h.depth === 2 || h.depth === 3);
           ticking = false;
         });
       };
+      const hashHandler = () => {
+        const id = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+        if (id && headingIds.includes(id)) {
+          setActive(id);
+        }
+      };
 
       window.addEventListener("scroll", scrollHandler, { passive: true });
-      window.addEventListener("resize", onScroll,      { passive: true });
+      window.addEventListener("resize", onScroll, { passive: true });
+      window.addEventListener("hashchange", hashHandler, { passive: true });
 
       // ── Cleanup on next transition ─────────────────────────
       // Astro fires astro:before-swap before tearing down the old page.
-      // Remove the scroll listener to avoid memory leaks.
+      // Remove listeners/observer to avoid memory leaks.
+      const cleanup = () => {
+        observer?.disconnect();
+        observer = null;
+        visibleIds.clear();
+        clickCleanup.forEach((fn) => fn());
+        clickCleanup.length = 0;
+        window.removeEventListener("scroll", scrollHandler);
+        window.removeEventListener("resize", onScroll);
+        window.removeEventListener("hashchange", hashHandler);
+      };
+      teardown = cleanup;
+
       document.addEventListener(
         "astro:before-swap",
         () => {
-          window.removeEventListener("scroll", scrollHandler);
-          window.removeEventListener("resize", onScroll);
+          cleanup();
+          teardown = null;
         },
         { once: true }
       );
