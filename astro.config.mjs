@@ -10,7 +10,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
 export default defineConfig({
-  site: "https://tado-site.pages.dev",
+  site: "https://tadoeng.pages.dev",
   adapter: cloudflare({
     platformProxy: {
       enabled: true
