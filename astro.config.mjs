@@ -12,11 +12,13 @@ import rehypeKatex from "rehype-katex";
 export default defineConfig({
   site: "https://tadoeng.pages.dev",
   adapter: cloudflare({
-    platformProxy: {
-      enabled: true
-    },
-    imageService: "cloudflare"
-  }),
+  platformProxy: {
+    enabled: true,
+    configPath: "wrangler.jsonc",
+  },
+  imageService: "cloudflare",
+  prerenderEnvironment: "node",
+}),
   integrations: [react(), mdx(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
@@ -37,12 +39,8 @@ export default defineConfig({
         light: "github-light",
         dark:  "one-dark-pro",
       },
-      // Wrap long lines instead of horizontal scroll inside Shiki itself.
-      // Our .code-block-wrap handles overflow, so keep this false.
       wrap: false,
-      // Strip Shiki's inline background so our .code-block-wrap bg wins.
       defaultColor: false,
-
     },
   },
 });

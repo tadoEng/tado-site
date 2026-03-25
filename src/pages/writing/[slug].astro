@@ -1,13 +1,9 @@
 ---
 // src/pages/writing/[slug].astro
 //
-// WHY slug NOT id:
-// In Astro's legacy content collections (Astro 4 without the new
-// content layer flag), post.id includes the file extension:
-//   post.id   = "etabssharp-c-wrapper.mdx"   ← gives /writing/etabssharp-c-wrapper.mdx
-//   post.slug = "etabssharp-c-wrapper"        ← gives /writing/etabssharp-c-wrapper  ✓
-//
-// We use post.slug for the route param and all internal hrefs.
+// With the Content Layer API (Astro 6), post.id is now the clean slug
+// without file extension — e.g. "etabssharp-c-wrapper" not "etabssharp-c-wrapper.mdx"
+// So we use post.id for both the route param and all internal hrefs.
 import ArticleLayout from "@layouts/ArticleLayout.astro";
 import { getCollection, render } from "astro:content";
 
@@ -18,15 +14,13 @@ export async function getStaticPaths() {
   );
 
   return sorted.map((post, index) => ({
-    // Route param is slug (no extension)
-    params: { slug: post.slug },
+    params: { slug: post.id },
     props: {
       post,
       prevPost: index > 0 ? sorted[index - 1] : undefined,
       nextPost: index < sorted.length - 1 ? sorted[index + 1] : undefined,
-      // Recommend by lane first, then recency — exclude self, take top 2
       recommendedPosts: posts
-        .filter((candidate) => candidate.slug !== post.slug)
+        .filter((candidate) => candidate.id !== post.id)
         .sort((a, b) => {
           const laneMatchA = a.data.lane === post.data.lane ? 1 : 0;
           const laneMatchB = b.data.lane === post.data.lane ? 1 : 0;
