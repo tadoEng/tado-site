@@ -1,12 +1,5 @@
 ---
 // src/components/ui/PostCard.astro
-// ─────────────────────────────────────────────────────────────
-// Used in: homepage post grid, /writing index, ArticleLayout
-// recommended posts section.
-//
-// Uses post.slug (not post.id) for the href so URLs are clean:
-//   /writing/my-post  not  /writing/my-post.mdx
-// ─────────────────────────────────────────────────────────────
 import { Badge } from "@/components/starwind/badge";
 import type { CollectionEntry } from "astro:content";
 
@@ -34,7 +27,7 @@ const primaryTag = tags[0];
 ---
 
 <a
-  href={`/writing/${post.slug}`}
+  href={`/writing/${post.id}`}
   class="group flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm
          transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
          hover:border-primary/30 overflow-hidden no-underline"

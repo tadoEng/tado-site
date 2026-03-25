@@ -1,9 +1,9 @@
 ---
 // src/pages/writing/[slug].astro
 //
-// With the Content Layer API (Astro 6), post.id is now the clean slug
-// without file extension — e.g. "etabssharp-c-wrapper" not "etabssharp-c-wrapper.mdx"
-// So we use post.id for both the route param and all internal hrefs.
+// Astro 6 Content Layer API: post.id is the clean slug without file extension
+// e.g. "etabsharp-csharp-wrapper" not "etabsharp-csharp-wrapper.mdx"
+// Use post.id for both the route param and all internal hrefs.
 import ArticleLayout from "@layouts/ArticleLayout.astro";
 import { getCollection, render } from "astro:content";
 

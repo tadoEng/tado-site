@@ -16,9 +16,9 @@ const sortedPosts = allPosts.sort(
   (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
 );
 const featuredPost = sortedPosts.find((p) => p.data.featured) ?? sortedPosts[0];
-// PostCard uses post.slug internally, but filter here uses slug too for consistency
+// PostCard uses post.id internally; filter here uses id too for consistency
 const gridPosts = sortedPosts
-  .filter((p) => p.slug !== featuredPost?.slug)
+  .filter((p) => p.id !== featuredPost?.id)
   .slice(0, 3);
 
 const allProjects = await getCollection("projects");
@@ -105,7 +105,7 @@ const sortedProjects = allProjects
 
       {featuredPost && (
         <a
-          href={`/writing/${featuredPost.slug}`}
+          href={`/writing/${featuredPost.id}`}
           class="group grid md:grid-cols-2 gap-0 rounded-xl overflow-hidden border
                  shadow-sm mb-6 transition-all duration-200 hover:shadow-md
                  hover:border-primary/30 no-underline bg-card"

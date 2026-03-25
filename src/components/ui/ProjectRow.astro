@@ -1,9 +1,5 @@
 ---
 // src/components/ui/ProjectRow.astro
-// ─────────────────────────────────────────────────────────────
-// Uses project.slug (not project.id) for the href so URLs are
-// clean:  /projects/etabssharp  not  /projects/etabssharp.mdx
-// ─────────────────────────────────────────────────────────────
 import { Badge } from "@/components/starwind/badge";
 import type { CollectionEntry } from "astro:content";
 
@@ -23,7 +19,7 @@ const statusVariant = {
 ---
 
 <a
-  href={`/projects/${project.slug}`}
+  href={`/projects/${project.id}`}
   class="group grid grid-cols-[3rem_1fr_auto] items-start gap-4
          rounded-lg px-3 py-4 border border-transparent
          transition-all duration-150

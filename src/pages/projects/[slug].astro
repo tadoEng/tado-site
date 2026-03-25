@@ -1,10 +1,10 @@
 ---
 // src/pages/projects/[slug].astro
 //
-// WHY slug NOT id:
-// In Astro legacy content collections, project.id = "etabssharp.mdx"
-// which would produce /projects/etabssharp.mdx — broken.
-// project.slug = "etabssharp" → /projects/etabssharp  ✓
+// Astro 6 Content Layer API: project.id is the clean filename without
+// extension — e.g. "etabssharp" not "etabssharp.mdx".
+// We use project.id as the route param value so URLs are clean:
+//   /projects/etabssharp  ✓
 import BaseLayout from "@layouts/BaseLayout.astro";
 import TableOfContents from "@components/ui/TableOfContents.astro";
 import { Badge } from "@/components/starwind/badge";
@@ -37,10 +37,6 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
   <div id="reading-progress" aria-hidden="true"></div>
 
   <div class={`mx-auto px-4 sm:px-6 py-16 w-full ${hasToc ? "max-w-300" : "max-w-article"}`}>
-    <!--
-      Keep aside stretched to row height so sticky TOC has vertical
-      travel room for long articles.
-    -->
     <div class={hasToc ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-16" : ""}>
 
       <article>

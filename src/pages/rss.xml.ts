@@ -18,8 +18,8 @@ export async function GET(context: APIContext) {
       title:       post.data.title,
       pubDate:     post.data.publishDate,
       description: post.data.description,
-      // Use slug (no extension) for clean URLs in the feed
-      link:        `/writing/${post.slug}/`,
+      // Use id (no extension) for clean URLs — Astro 6 Content Layer API
+      link:        `/writing/${post.id}/`,
       categories:  post.data.tags,
     })),
     customData: `<language>en-us</language>`,

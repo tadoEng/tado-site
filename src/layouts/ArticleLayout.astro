@@ -42,7 +42,7 @@ const laneVariant = {
 const formatLane = (value: string) =>
   value.charAt(0).toUpperCase() + value.slice(1);
 
-// Uses .slug (not .id) for clean URLs — no .mdx extension
+// Uses .id (not .slug) for clean URLs in Astro 6 Content Layer API
 const formatNavMeta = (entry: CollectionEntry<"writing">) =>
   `${formatLane(entry.data.lane)} · ${new Date(entry.data.publishDate).toLocaleDateString("en-US", {
     month: "short",
@@ -140,7 +140,7 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
               >
                 {prevPost ? (
                   <a
-                    href={`/writing/${prevPost.slug}`}
+                    href={`/writing/${prevPost.id}`}
                     class="group flex items-center gap-3 rounded-xl border bg-card
                            px-4 py-3.5 transition-all hover:border-primary/40
                            hover:shadow-sm no-underline"
@@ -163,7 +163,7 @@ const hasToc = headings.filter((h) => h.depth === 2 || h.depth === 3).length > 1
 
                 {nextPost ? (
                   <a
-                    href={`/writing/${nextPost.slug}`}
+                    href={`/writing/${nextPost.id}`}
                     class="group flex items-center justify-end gap-3 rounded-xl border bg-card
                            px-4 py-3.5 text-right transition-all hover:border-primary/40
                            hover:shadow-sm no-underline"

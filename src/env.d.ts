@@ -1,5 +1,8 @@
-type Runtime = import("@astrojs/cloudflare").Runtime<Env>;
+/// <reference types="astro/client" />
+/// <reference types="@cloudflare/workers-types" />
 
 declare namespace App {
-	interface Locals extends Runtime {}
+  interface Locals {
+    cfContext?: ExecutionContext;
+  }
 }
