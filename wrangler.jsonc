@@ -1,29 +1,12 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-    "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "tado-site",
-    "compatibility_date": "2025-09-27",
-    "compatibility_flags": [
-        "nodejs_compat"
-    ],
-    "pages_build_output_dir": "./dist",
-    "observability": {
-        "enabled": true
-    },
-    /**
-     * KV Namespaces
-     * Required by @astrojs/cloudflare adapter (session storage is always enabled).
-     * Replace the "id" value with your real KV namespace ID.
-     * Create one with: wrangler kv namespace create SESSION
-     * Then paste the returned ID below.
-     */
-    "kv_namespaces": [
-        {
-            "binding": "SESSION",
-            "id": "3585cf3a3b2148beba74e95c3e791c5d"
-        }
-    ]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tado-site",
+  "compatibility_date": "2025-09-27",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "pages_build_output_dir": "./dist",
+  "observability": {
+    "enabled": true
+  }
 }

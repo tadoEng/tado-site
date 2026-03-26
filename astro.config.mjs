@@ -16,8 +16,9 @@ export default defineConfig({
       enabled: true,
       configPath: "wrangler.jsonc",
     },
-    imageService: "compile",
+    imageService: "passthrough",
     prerenderEnvironment: "node",
+    sessions: false,
   }),
   integrations: [react(), mdx(), sitemap()],
   vite: {
@@ -37,7 +38,7 @@ export default defineConfig({
     shikiConfig: {
       themes: {
         light: "github-light",
-        dark:  "one-dark-pro",
+        dark: "one-dark-pro",
       },
       wrap: false,
       defaultColor: false,
