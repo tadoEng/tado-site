@@ -1,0 +1,15 @@
+---
+import ToolLayout from "@layouts/ToolLayout.astro";
+import ACIReference from "@components/tools/ACIReference";
+---
+
+<ToolLayout
+  title="ACI Quick Reference"
+  description="ACI 318-14 concrete properties, ASTM standard reinforcing bar dimensions, and per-foot area spacing tables for structural engineers."
+  status="live"
+  relatedPosts={[
+    { id: "stiffness-matrix-from-scratch", title: "The Stiffness Matrix from First Principles" },
+  ]}
+>
+  <ACIReference client:load />
+</ToolLayout>

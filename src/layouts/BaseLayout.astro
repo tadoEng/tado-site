@@ -39,8 +39,8 @@ const fullTitle =
 
         const applyTheme = () => {
           const stored = localStorage.getItem(storageKey);
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const isDark = stored === "dark" || (stored !== "light" && prefersDark);
+          // Default is now light — only go dark if explicitly stored as dark
+          const isDark = stored === "dark";
 
           document.documentElement.classList.toggle("dark", isDark);
           document.documentElement.classList.toggle("light", !isDark);
