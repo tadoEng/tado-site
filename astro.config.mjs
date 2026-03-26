@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import cloudflare from '@astrojs/cloudflare';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
@@ -11,17 +10,7 @@ import rehypeKatex from "rehype-katex";
 
 export default defineConfig({
   site: "https://tadoeng.pages.dev",
-  adapter: cloudflare({
-  platformProxy: {
-    enabled: true,
-    configPath: "wrangler.jsonc",
-  },
-  imageService: "passthrough",
-  prerenderEnvironment: "node",
-  sessions: {
-    enabled: false,
-  },
-}),
+  output: "static",
   integrations: [react(), mdx(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
