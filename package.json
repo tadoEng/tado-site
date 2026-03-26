@@ -4,12 +4,12 @@
     "version": "0.0.1",
     "scripts": {
         "dev": "astro dev",
-        "build": "astro build",
+        "build": "astro build && node ./scripts/fix-wrangler.mjs",
         "preview": "wrangler pages dev ./dist",
         "astro": "astro",
-        "deploy": "astro build && wrangler pages deploy",
+        "deploy": "astro build && node ./scripts/fix-wrangler.mjs && wrangler pages deploy",
         "cf-typegen": "wrangler types"
-    },
+        },
     "dependencies": {
         "@astrojs/cloudflare": "^13.1.3",
         "@astrojs/mdx": "^5.0.2",
