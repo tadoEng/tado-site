@@ -18,7 +18,6 @@ export default defineConfig({
     },
     imageService: "compile",
     prerenderEnvironment: "node",
-    sessions: false,
   }),
   integrations: [react(), mdx(), sitemap()],
   vite: {
