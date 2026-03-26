@@ -1,11 +1,10 @@
 // scripts/fix-wrangler.mjs
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, copyFileSync } from "node:fs";
 
 const path = "./dist/server/wrangler.json";
 const config = JSON.parse(readFileSync(path, "utf-8"));
 
 // Build a clean minimal Pages-compatible config
-// keeping only what Cloudflare Pages actually needs
 const clean = {
   name: "tado-site",
   compatibility_date: config.compatibility_date,
@@ -17,3 +16,7 @@ const clean = {
 
 writeFileSync(path, JSON.stringify(clean, null, 2));
 console.log("✓ Patched dist/server/wrangler.json for Cloudflare Pages compatibility");
+
+// Copy worker entry to dist/client/_worker.js for Cloudflare Pages advanced mode
+copyFileSync("./dist/server/entry.mjs", "./dist/client/_worker.js");
+console.log("✓ Copied entry.mjs → dist/client/_worker.js for Pages advanced mode");
