@@ -12,13 +12,14 @@ import rehypeKatex from "rehype-katex";
 export default defineConfig({
   site: "https://tadoeng.pages.dev",
   adapter: cloudflare({
-  platformProxy: {
-    enabled: true,
-    configPath: "wrangler.jsonc",
-  },
-  imageService: "cloudflare",
-  prerenderEnvironment: "node",
-}),
+    platformProxy: {
+      enabled: true,
+      configPath: "wrangler.jsonc",
+    },
+    imageService: "compile",
+    prerenderEnvironment: "node",
+    sessions: false,
+  }),
   integrations: [react(), mdx(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
